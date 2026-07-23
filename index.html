@@ -117,8 +117,8 @@
   html:not(.light) .lvl-badge.senior{border-color:rgba(177,145,214,.4);}
   /* стильний tooltip */
   .tip{position:relative; display:inline-flex;}
-  .tip::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:0;
-    width:max-content; max-width:250px; background:var(--bg2); color:var(--text);
+  .tip::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); right:0;
+    width:max-content; max-width:230px; background:var(--bg2); color:var(--text);
     border:1px solid var(--border); border-radius:8px; padding:8px 11px;
     font-family:Georgia,serif; font-size:12.5px; line-height:1.45; text-align:left; white-space:normal;
     box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transform:translateY(-4px);
@@ -809,7 +809,7 @@ function renderLvSwitch(){
     $('#lvswitch').innerHTML = '<span class="lvl-badge '+lv+'"><i></i>Рівень: <b>'+LVNAME[lv]+'</b></span>'+
       '<span class="tip" data-tip="Відв’язує ліцензійний ключ від цього комп’ютера, щоб можна було увійти з іншого. '+
       'Кількість перенесень на нові пристрої обмежена.">'+
-      '<button class="btn tiny" onclick="releaseDevice()">Звільнити пристрій</button></span>';
+      '<button class="btn" onclick="releaseDevice()">Звільнити пристрій</button></span>';
     return;
   }
   $('#lvswitch').innerHTML = COURSE.levels.map(l=>
@@ -1090,16 +1090,15 @@ async function openLesson(id, scrollTop){
   if(done){
     html += '<div class="ct">&#10003; Урок пройдено. '+(nextId?'Рухаймося далі!':'Це останній урок на вашому рівні — вітаємо!')+'</div>'+
       '<div class="row">'+
-      (nextId? '<button class="btn primary big" onclick="openLesson(\''+nextId+'\')">Наступний урок &rarr;</button>':'')+
       testBtn+
+      (nextId? '<button class="btn primary big" onclick="openLesson(\''+nextId+'\')">Наступний урок &rarr;</button>':'')+
       '<button class="btn ghost" onclick="toggleDone(\''+id+'\')">Зняти позначку</button></div>';
   } else {
     html += '<div class="ct">Опрацювали матеріал? Позначте урок, щоб рахувати прогрес і серію.</div>'+
       '<div class="row">'+
+      testBtn+
       '<button class="btn primary big" onclick="markDoneNext(\''+id+'\','+(nextId?'\''+nextId+'\'':'null')+')">'+
         'Позначити пройденим'+(nextId?' і далі &rarr;':'')+'</button>'+
-      testBtn+
-      (nextId? '<button class="btn ghost" onclick="openLesson(\''+nextId+'\')">Пропустити &rarr;</button>':'')+
       '</div>';
   }
   html += '</div>';
