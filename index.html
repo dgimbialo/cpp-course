@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Інтерактивний курс C++</title>
+<style>
+  :root{
+    --bg:#15171e; --bg2:#1d1f27; --bg3:#262931; --border:#373c48;
+    --text:#c6cad3; --text-dim:#9095a4; --head:#e2e5ec;
+    --accent:#5cb6d4; --accent2:#8fcfe0;
+    --note:#e0a06a;
+    --code-bg:#1f232d; --kw:#b191c9; --str:#9bbf95; --com:#727a8b; --pre:#d3a869;
+    --done:#6cc79a; --todo:#5a616f;
+    --lv-j:#6cc79a; --lv-m:#e0ad6a; --lv-s:#b191d6;
+    --code-fg:#c4cad4; --code-inline:#a6c2aa; --num:#d69aa0;
+    --ref-t:#7fb8cf; --book-t:#9bbf95; --btn-hov:#c3e6f2;
+    /* неон */
+    --neon:#00ccff; --neon2:#ff55bb; --neon3:#cc44ff;
+    --glow-cyan:0 0 18px rgba(0,204,255,.30);
+    --glow-pink:0 0 18px rgba(255,85,187,.28);
+  }
+  html.light{
+    --bg:#f4f3ef; --bg2:#ffffff; --bg3:#e8e7e0; --border:#cfcec5;
+    --text:#33322f; --text-dim:#71706a; --head:#191919;
+    --accent:#3a6ea5; --accent2:#2d5988;
+    --note:#996a1c;
+    --code-bg:#f0efe8; --kw:#8a3a8a; --str:#3d7a3d; --com:#8b8b82; --pre:#8a6a35;
+    --done:#3e7d3e; --todo:#a3a29a;
+    --lv-j:#3e7d3e; --lv-m:#9a7220; --lv-s:#7a5a9e;
+    --code-fg:#2f2e29; --code-inline:#2f4a2f; --num:#9a4632;
+    --ref-t:#2f5d8a; --book-t:#44702f; --btn-hov:#16324d;
+    --neon:#2f6ea5; --neon2:#b03a7a; --neon3:#7a5a9e;
+    --glow-cyan:none; --glow-pink:none;
+  }
+  html.light .cnote code{background:rgba(0,0,0,.08);}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--text); font-family:Georgia,'Times New Roman',serif; font-size:17px; line-height:1.65;}
+
+  /* ---------- вибір рівня ---------- */
+  #lvgate,#keygate{position:fixed; inset:0; z-index:200; background:var(--bg);
+          display:flex; align-items:center; justify-content:center; padding:24px;}
+  #lvgate .box,#keygate .box{max-width:900px; width:100%;}
+  #lvgate h1,#keygate h1{color:var(--head); font-size:27px; font-weight:normal; margin-bottom:6px;}
+  #lvgate .sub,#keygate .sub{color:var(--text-dim); font-size:15px; margin-bottom:26px;}
+  .kg-form{display:flex; flex-direction:column; gap:6px;}
+  .kg-form label{font-size:13px; color:var(--text-dim); margin-top:8px;}
+  .kg-form input{background:var(--bg3); border:1px solid var(--border); color:var(--text);
+    border-radius:7px; padding:10px 12px; font-size:15px; outline:none; font-family:inherit;}
+  .kg-form input:focus{border-color:var(--accent);}
+  .kg-form .btn{margin-top:16px; padding:11px; font-size:15px; justify-content:center;}
+  .kg-err{color:var(--note); font-size:13.5px; min-height:18px; margin-top:8px;}
+  #lvgate .cards{display:flex; gap:14px; flex-wrap:wrap;}
+  .lvcard{flex:1; min-width:230px; background:var(--bg2); border:1px solid var(--border);
+          border-radius:12px; padding:18px 20px; cursor:pointer; transition:border-color .15s;}
+  .lvcard:hover{border-color:var(--accent);}
+  .lvcard .nm{font-size:20px; color:var(--head); margin-bottom:8px;}
+  .lvcard .ds{font-size:14.5px; color:var(--text-dim); line-height:1.55;}
+  .lvcard .cnt{font-size:12.5px; color:var(--accent2); margin-top:12px;}
+  .lvcard.junior .nm{color:var(--lv-j);} .lvcard.middle .nm{color:var(--lv-m);} .lvcard.senior .nm{color:var(--lv-s);}
+  #lvgate .hint{color:var(--todo); font-size:13px; margin-top:20px;}
+
+  #layout{display:flex; min-height:100vh;}
+  #sidebar{width:360px; min-width:360px; background:var(--bg2); border-right:1px solid var(--border);
+           height:100vh; overflow-y:auto; position:sticky; top:0; padding:14px;}
+  #sidebar h1{font-size:16px; color:var(--head); line-height:1.35; margin-bottom:2px;}
+  #sidebar .authors{font-size:12.5px; color:var(--text-dim); margin-bottom:10px;}
+  #search{width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border);
+          border-radius:6px; color:var(--text); font-size:14px; outline:none; margin-bottom:6px;}
+  #search:focus{border-color:var(--accent);}
+  .sr{padding:6px 8px; border-left:2px solid var(--accent); background:var(--bg3); margin:4px 0;
+      font-size:13px; cursor:pointer; border-radius:0 5px 5px 0;}
+  .sr:hover{background:var(--bg3);}
+  .sr .t{color:var(--accent2);}
+  .sr .snip{color:var(--text-dim); font-size:12px;}
+  .sr .snip mark{background:transparent; color:var(--note);}
+  #progress{font-size:15.5px; color:var(--text-dim); margin:6px 0 10px;}
+  #progress .bar{height:7px; background:var(--bg3); border-radius:3px; overflow:hidden; margin-top:4px;}
+  #progress .fill{height:100%; background:var(--done); border-radius:3px;}
+  #progress .stats{margin-top:5px; font-size:15px;}
+  #lvswitch{display:flex; gap:8px; margin:0 0 10px; align-items:center; flex-wrap:wrap;}
+  #lvswitch button{flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text-dim);
+                   padding:5px 0; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:inherit;}
+  #lvswitch button.on{color:var(--head); border-color:var(--accent);}
+  #lvswitch button[data-l=junior].on{border-color:var(--lv-j); color:var(--lv-j);}
+  #lvswitch button[data-l=middle].on{border-color:var(--lv-m); color:var(--lv-m);}
+  #lvswitch button[data-l=senior].on{border-color:var(--lv-s); color:var(--lv-s);}
+
+  .toc-mod{margin-top:9px;}
+  .toc-mod>.mtitle{font-size:13.5px; color:var(--head); letter-spacing:.3px;
+                   cursor:pointer; padding:4px 2px; user-select:none;}
+  .toc-mod>.mtitle:hover{color:var(--accent2);}
+  .toc-mod>.mtitle .mcount{float:right; font-size:11px; color:var(--text-dim); font-weight:normal;}
+  .toc-les{font-size:13.5px; padding:4px 6px 4px 14px; cursor:pointer; border-radius:5px; color:var(--text);}
+  .toc-les:hover{background:var(--bg3);}
+  .toc-les.active{background:var(--bg3); color:var(--accent2);}
+  .toc-les.empty{color:var(--todo); font-style:italic;}
+  .toc-les::before{content:"○"; color:var(--todo); font-size:9px; margin-right:6px; vertical-align:1px;}
+  .toc-les.ready::before{content:"●"; color:var(--accent);}
+  .toc-les.done::before{content:"●"; color:var(--done);}
+  .toc-les .qbadge{color:var(--accent2); font-size:10px; margin-left:4px;}
+  .lvtag{font-family:Consolas,monospace; font-size:9.5px; padding:0 5px; border-radius:8px;
+         margin-left:5px; vertical-align:1px; color:#1c1f24;}
+  .lvtag.junior{background:var(--lv-j);} .lvtag.middle{background:var(--lv-m);} .lvtag.senior{background:var(--lv-s);}
+  .addtag{font-size:10px; color:var(--note); margin-left:4px;}
+  /* бейдж рівня доступу (онлайн-режим) */
+  .lvl-badge{display:inline-flex; align-items:center; gap:7px; background:var(--bg3);
+    border:1px solid var(--border); border-radius:999px; padding:5px 13px; font-size:13px; color:var(--text);}
+  .lvl-badge i{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
+  .lvl-badge b{color:var(--head); font-weight:bold;}
+  .lvl-badge.junior i{background:var(--lv-j);}
+  .lvl-badge.middle i{background:var(--lv-m);}
+  .lvl-badge.senior i{background:var(--lv-s);}
+  html:not(.light) .lvl-badge.junior{border-color:rgba(108,199,154,.4);}
+  html:not(.light) .lvl-badge.middle{border-color:rgba(224,173,106,.4);}
+  html:not(.light) .lvl-badge.senior{border-color:rgba(177,145,214,.4);}
+  /* стильний tooltip */
+  .tip{position:relative; display:inline-flex;}
+  .tip::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); left:0;
+    width:max-content; max-width:250px; background:var(--bg2); color:var(--text);
+    border:1px solid var(--border); border-radius:8px; padding:8px 11px;
+    font-family:Georgia,serif; font-size:12.5px; line-height:1.45; text-align:left; white-space:normal;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; pointer-events:none; transform:translateY(-4px);
+    transition:opacity .15s ease, transform .15s ease; z-index:60;}
+  .tip:hover::after, .tip:focus-within::after{opacity:1; transform:translateY(0);}
+  html:not(.light) .tip::after{border-color:rgba(0,204,255,.32);
+    box-shadow:0 0 18px rgba(0,204,255,.12), 0 8px 24px rgba(0,0,0,.55);}
+  /* походження теми */
+  .origin{font-size:10px; padding:1px 7px; border-radius:9px; margin-left:5px;
+          border:1px solid currentColor; white-space:nowrap;}
+  .origin.gl{color:#d98b5f;} .origin.prometheus{color:#7fa8d4;}
+  .origin.book{color:#a9c48a;} .origin.added{color:var(--note);}
+  .origin.dot{padding:0; width:7px; height:7px; border-radius:50%; display:inline-block;
+              background:currentColor; border:none; vertical-align:1px;}
+
+  #main{flex:1; max-width:960px; padding:76px 48px 120px; margin:0 auto;}
+  #sec-head{position:fixed; top:0; left:360px; right:0; z-index:20; background:var(--bg2);
+            border-bottom:1px solid var(--border); padding:6px 18px;
+            transform:translateY(0); transition:transform .18s ease;}
+  #sec-head.hidden{transform:translateY(-105%);}
+  #head-zone{position:fixed; top:0; left:360px; right:0; height:14px; z-index:19;}
+  .sh-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .sh-title{color:var(--head); font-size:20px; white-space:nowrap; overflow:hidden;
+            text-overflow:ellipsis; max-width:34%;}
+  .sh-sp{flex:1;}
+  #sec-head .btn.tiny{min-height:32px; font-size:13.5px; padding:5px 12px;}
+  .read-badge{display:inline-flex; align-items:center; background:var(--done); color:#12240f;
+              font-weight:bold; border-radius:6px; padding:0 9px; min-height:32px; font-size:14px;}
+  .content *{scroll-margin-top:76px;}
+  .crumbs{font-size:13px; color:var(--text-dim); margin-bottom:8px;}
+  h2.sec-title{color:var(--head); font-size:24px; margin-bottom:6px; font-weight:normal;}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px;
+       background:var(--bg3); border:1px solid var(--border); color:var(--accent2);
+       min-height:34px; padding:6px 16px; border-radius:8px; cursor:pointer;
+       font-size:14px; line-height:1.1; font-family:inherit; white-space:nowrap;
+       transition:border-color .15s, color .15s, background .15s;}
+  .btn:hover{border-color:var(--accent); color:var(--btn-hov); background:var(--bg2);}
+  .btn.tiny{min-height:30px; padding:4px 11px; font-size:12.5px; margin-left:0;}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:bold;}
+  .btn.primary:hover{filter:brightness(1.08); color:#fff; background:var(--accent);}
+  .btn.ghost{background:transparent;}
+  .content h3{color:var(--head); font-size:20px; margin:26px 0 10px; font-weight:normal;}
+  .content h4{color:var(--accent2); font-size:17px; margin:20px 0 8px; font-weight:normal;}
+  .content p{margin:0 0 12px;}
+  .content ul,.content ol{margin:0 0 14px 26px;}
+  .content li{margin-bottom:6px;}
+  .content em{color:var(--accent2); font-style:italic;}
+  /* таблиці markdown */
+  table.md{border-collapse:collapse; width:100%; margin:0 0 18px; font-size:.93em;
+           background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+           overflow:hidden; display:table;}
+  table.md th{background:var(--bg3); color:var(--head); font-weight:normal;
+              padding:8px 12px; border-bottom:1px solid var(--border);
+              border-right:1px solid var(--border); white-space:nowrap;}
+  table.md td{padding:8px 12px; border-bottom:1px solid var(--border);
+              border-right:1px solid var(--border); vertical-align:top;}
+  table.md th:last-child, table.md td:last-child{border-right:none;}
+  table.md tr:last-child td{border-bottom:none;}
+  table.md tbody tr:hover{background:rgba(255,255,255,.02);}
+  table.md td:first-child{color:var(--head);}
+  .lvblock table.md, details.xblock table.md{background:var(--bg3);}
+  @media print{ table.md{background:#fff; border-color:#999;}
+    table.md th{background:#eee; color:#000; border-color:#999;}
+    table.md td{border-color:#999; color:#000;} }
+  .content strong{color:var(--head);}
+  code{font-family:Consolas,'Courier New',monospace; font-size:.88em; background:var(--code-bg);
+       padding:1px 5px; border-radius:4px; color:var(--code-inline);}
+  pre{background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:14px 16px;
+      overflow-x:auto; margin:0 0 16px; line-height:1.5;}
+  pre code{background:none; padding:0; font-size:14px; color:var(--code-fg); display:block; white-space:pre;}
+  .kw{color:var(--kw);} .str{color:var(--str);} .com{color:var(--com);} .pp{color:var(--pre);} .num{color:var(--num);}
+
+  /* рівневі блоки теорії */
+  .lvblock{border:1px solid var(--border); border-left-width:3px; border-radius:8px;
+           margin:0 0 16px; background:var(--bg2); padding:12px 16px 4px;}
+  .lvblock>.lvhead{font-size:12px; letter-spacing:.6px; text-transform:uppercase;
+                   margin-bottom:8px; opacity:.9;}
+  .lvblock.middle{border-left-color:var(--lv-m);} .lvblock.middle>.lvhead{color:var(--lv-m);}
+  .lvblock.senior{border-left-color:var(--lv-s);} .lvblock.senior>.lvhead{color:var(--lv-s);}
+  .lvblock.junior{border-left-color:var(--lv-j);} .lvblock.junior>.lvhead{color:var(--lv-j);}
+
+  details.xblock{border:1px solid var(--border); border-radius:8px; margin:0 0 16px; background:var(--bg2);}
+  details.xblock>summary{cursor:pointer; padding:9px 14px; font-size:14.5px; user-select:none;
+                         list-style:none; display:flex; align-items:center; gap:8px;}
+  details.xblock>summary::-webkit-details-marker{display:none;}
+  details.xblock>summary::before{content:"\25B8"; color:var(--text-dim); font-size:11px; transition:transform .15s;}
+  details.xblock[open]>summary::before{transform:rotate(90deg);}
+  details.xblock>.xbody{padding:4px 16px 10px; border-top:1px solid var(--border);}
+  details.deep{border-left:3px solid var(--note);}
+  details.deep>summary{color:var(--note);}
+  details.deep .xbody{color:var(--note); font-size:15.5px;}
+  details.deep .xbody code{color:var(--note); background:rgba(0,0,0,.25);}
+  details.stdcmp{border-left:3px solid var(--accent);}
+  details.stdcmp>summary{color:var(--accent2);}
+  details.refblock{border-left:3px solid #7fa8d4;}
+  details.refblock>summary{color:var(--ref-t);}
+  details.refblock .xbody{font-size:15.5px;}
+  details.bookblock{border-left:3px solid var(--book-t);}
+  details.bookblock>summary{color:var(--book-t);}
+  details.bookblock .xbody{font-size:15.5px;}
+  .stdb{font-family:Consolas,monospace; font-size:11px; padding:1px 7px; border-radius:9px; color:#fff;}
+  .stdb.b11{background:#3d6a96;} .stdb.b14{background:#2e7d74;}
+  .stdb.b17{background:#4a7d46;} .stdb.b20{background:#6d5596;} .stdb.b23{background:#8a5a5a;}
+
+  .cnote{border-left:3px solid var(--note); background:rgba(210,168,107,.07); padding:10px 14px;
+         margin:0 0 16px; border-radius:0 8px 8px 0; color:var(--note); font-size:15.5px;}
+  .cnote .lbl{font-size:11px; text-transform:uppercase; letter-spacing:.8px; opacity:.75; display:block; margin-bottom:4px;}
+  .cnote code{color:var(--note); background:rgba(0,0,0,.25);}
+  .cnote p{margin:0 0 10px;} .cnote p:last-child{margin-bottom:0;}
+
+  .example-box{border:1px solid var(--border); border-radius:8px; padding:12px 16px; margin:0 0 16px; background:var(--bg2);}
+  .example-box .ex-head{color:var(--head); font-size:14.5px; margin-bottom:8px;}
+  .example-box .proj{font-size:13px; color:var(--text-dim);}
+  .example-box .proj code{color:var(--done);}
+  .example-box pre{margin-bottom:8px;}
+
+  /* панель уроку: джерело, cppreference, проєкти */
+  .infobox{border:1px solid var(--border); border-radius:10px; background:var(--bg2);
+           padding:12px 16px; margin:0 0 18px; font-size:14.5px;}
+  .infobox .ttl{color:var(--head); font-size:13px; text-transform:uppercase;
+                letter-spacing:.7px; margin-bottom:8px;}
+  .infobox a{color:var(--accent2); text-decoration:none; border-bottom:1px dotted var(--border);}
+  .infobox a:hover{color:var(--btn-hov); border-bottom-color:var(--accent);}
+  .infobox li{margin-bottom:7px;}
+  .infobox ul{margin-left:20px;}
+  .infobox .why{color:var(--text-dim); font-size:13px; display:block;}
+  .projrow{display:flex; align-items:center; gap:9px; padding:6px 0; border-top:1px solid var(--border);}
+  .projrow:first-of-type{border-top:none;}
+  .projrow .pn{font-family:Consolas,monospace; font-size:13px; color:var(--done);}
+  .projrow .pt{flex:1; font-size:14px;}
+
+  .quiz-card{background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin-bottom:14px;}
+  .quiz-card .qnum{color:var(--text-dim); font-size:12.5px; margin-bottom:6px;}
+  .quiz-card .qtext{color:var(--head); font-size:17px; margin-bottom:12px;}
+  .quiz-opt{display:block; width:100%; text-align:left; background:var(--bg3); border:1px solid var(--border);
+            color:var(--text); border-radius:8px; padding:9px 14px; margin:6px 0; cursor:pointer;
+            font-size:15px; font-family:inherit;}
+  .quiz-opt:hover{border-color:var(--accent);}
+  .quiz-opt.correct{border-color:var(--done); color:var(--done);}
+  .quiz-opt.wrong{border-color:var(--num); color:var(--num);}
+  .quiz-opt:disabled{cursor:default; opacity:.85;}
+  .quiz-explain{border-left:3px solid var(--accent); background:rgba(130,170,201,.08);
+                padding:9px 13px; margin-top:10px; border-radius:0 7px 7px 0; font-size:14.5px;}
+  .quiz-score{font-size:22px; color:var(--head); margin:14px 0;}
+
+  .nav-btns{display:flex; justify-content:space-between; margin-top:44px; gap:10px;}
+  #heatmap{display:flex; gap:2px; margin-top:5px; flex-wrap:wrap;}
+  #heatmap .hm{width:11px; height:11px; border-radius:2px; background:var(--bg3);}
+  #heatmap .hm.l1{background:#3d5a3d;} #heatmap .hm.l2{background:#4f7d4f;}
+  #heatmap .hm.l3{background:#7fae7f;} #heatmap .hm.l4{background:#a8d8a8;}
+
+  @media print{
+    #sidebar,.nav-btns,#head-zone,#sec-head .btn,#lvgate,#keygate{display:none !important;}
+    #sec-head{position:static; background:none; border:none; padding:0 0 6px;}
+    #main{padding-top:0; max-width:100%;}
+    body{background:#fff; color:#000; font-size:12pt;}
+    .content h3,.content h4,h2.sec-title,.content strong{color:#000;}
+    pre{border:1px solid #999; background:#f5f5f5;} pre code{color:#111;}
+  }
+  /* ---------- глосарій: підказки до скорочень ---------- */
+  abbr.gl{border-bottom:1px dotted var(--accent); cursor:help; text-decoration:none;}
+  abbr.gl:hover{border-bottom-color:var(--accent2); color:var(--accent2);}
+  #gtip{position:fixed; z-index:120; max-width:420px; background:var(--bg3);
+        border:1px solid var(--accent); border-radius:8px; padding:10px 14px;
+        font-size:14px; line-height:1.5; color:var(--text); display:none;
+        box-shadow:0 6px 24px rgba(0,0,0,.45);}
+  #gtip .gt-term{color:var(--head); font-size:15px;}
+  #gtip .gt-full{color:var(--accent2); font-size:13px; margin:2px 0 6px;}
+
+  /* ---------- контекстне меню ---------- */
+  #ctxmenu{position:fixed; z-index:140; background:var(--bg3); border:1px solid var(--border);
+           border-radius:8px; padding:4px; display:none; box-shadow:0 6px 24px rgba(0,0,0,.5);}
+  #ctxmenu button{display:block; width:100%; text-align:left; background:none; border:none;
+                  color:var(--text); padding:7px 14px; font-size:14px; font-family:inherit;
+                  cursor:pointer; border-radius:5px; white-space:nowrap;}
+  #ctxmenu button:hover{background:var(--bg2); color:var(--accent2);}
+
+  /* ---------- діалог замітки ---------- */
+  #editdlg{position:fixed; inset:0; z-index:150; background:rgba(0,0,0,.55);
+           display:none; align-items:center; justify-content:center;}
+  #editdlg .dlg{background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+                padding:22px 26px; width:min(680px,92vw);}
+  #editdlg h3{color:var(--head); font-size:19px; font-weight:normal; margin-bottom:4px;}
+  #editdlg .where{color:var(--text-dim); font-size:13px; margin-bottom:14px;}
+  #editdlg .quote{border-left:3px solid var(--note); background:rgba(210,168,107,.07);
+                  padding:8px 12px; border-radius:0 6px 6px 0; color:var(--note);
+                  font-size:14.5px; margin-bottom:14px; max-height:160px; overflow:auto;}
+  #editdlg textarea{width:100%; min-height:130px; background:var(--bg3); color:var(--text);
+                    border:1px solid var(--border); border-radius:8px; padding:10px 12px;
+                    font-family:inherit; font-size:15px; outline:none; resize:vertical;}
+  #editdlg textarea:focus{border-color:var(--accent);}
+  #editdlg .row{display:flex; gap:9px; justify-content:flex-end; margin-top:14px;}
+
+  /* ---------- правий тулбар заміток ---------- */
+  #notebar{position:fixed; top:0; right:0; height:100vh; width:340px; z-index:60;
+           background:var(--bg2); border-left:1px solid var(--border);
+           transform:translateX(100%); transition:transform .2s ease;
+           display:flex; flex-direction:column;}
+  #notebar.open{transform:translateX(0);}
+  #notebar .nb-head{padding:12px 14px; border-bottom:1px solid var(--border);
+                    display:flex; align-items:center; gap:8px;}
+  #notebar .nb-head .t{color:var(--head); font-size:15px; flex:1;}
+  #notebar .nb-body{flex:1; overflow-y:auto; padding:10px 12px;}
+  #notebar .nb-foot{padding:10px 12px; border-top:1px solid var(--border);}
+  .nitem{background:var(--bg3); border:1px solid var(--border); border-left:3px solid var(--note);
+         border-radius:0 8px 8px 0; padding:9px 11px; margin-bottom:9px; font-size:13.5px;}
+  .nitem.done{border-left-color:var(--done); opacity:.65;}
+  .nitem .nq{color:var(--note); font-style:italic; margin-bottom:5px;
+             max-height:56px; overflow:hidden;}
+  .nitem .nn{color:var(--text); margin-bottom:6px;}
+  .nitem .nmeta{color:var(--text-dim); font-size:11.5px; display:flex; gap:7px; align-items:center;}
+  #notetab{position:fixed; right:0; top:44%; z-index:59; background:var(--bg3);
+           border:1px solid var(--border); border-right:none; border-radius:8px 0 0 8px;
+           color:var(--accent2); padding:12px 7px; cursor:pointer; font-size:13px;
+           writing-mode:vertical-rl; user-select:none;}
+  #notetab:hover{border-color:var(--accent); color:var(--btn-hov);}
+  #notetab .cnt{background:var(--note); color:#1e2126; border-radius:9px;
+                padding:0 5px; font-size:11px; writing-mode:horizontal-tb; display:inline-block;}
+  mark.editsel{background:rgba(210,168,107,.22); color:inherit; border-bottom:1px dashed var(--note);}
+
+  /* ---------- інтерактивний графік складності ---------- */
+  .mdwidget{margin:0 0 18px;}
+  .cx-wrap{border:1px solid var(--border); border-radius:10px; background:var(--bg2); padding:12px 14px;}
+  .cx-top{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:8px;}
+  .cx-title{color:var(--head); font-size:14.5px;}
+  .cx-ctrl{display:flex; align-items:center; gap:12px;}
+  .cx-scale{background:var(--bg3); border:1px solid var(--border); color:var(--accent2);
+            padding:4px 11px; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:inherit;}
+  .cx-scale:hover{border-color:var(--accent); color:var(--btn-hov);}
+  .cx-slider{color:var(--text-dim); font-size:12.5px; display:flex; align-items:center; gap:6px;}
+  .cx-slider b{color:var(--accent2);}
+  .cx-range{accent-color:var(--accent); cursor:pointer; width:120px;}
+  .cx-legend{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;}
+  .cx-chip{display:inline-flex; align-items:center; gap:6px; background:var(--bg3);
+           border:1px solid var(--border); color:var(--text); padding:3px 10px; border-radius:14px;
+           cursor:pointer; font-size:12.5px; font-family:Consolas,monospace;}
+  .cx-chip:hover{border-color:var(--accent);}
+  .cx-chip.off{opacity:.4;}
+  .cx-chip.off .cx-dot{opacity:.3;}
+  .cx-dot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .cx-plot{width:100%;}
+  .cx-svg{width:100%; height:auto; display:block; touch-action:none;}
+  .cx-axis{stroke:var(--border); stroke-width:1;}
+  .cx-grid{stroke:var(--border); stroke-width:1; opacity:.35; stroke-dasharray:3 4;}
+  .cx-ylab{fill:var(--text-dim); font-size:10px; font-family:Consolas,monospace; text-anchor:end;}
+  .cx-xlab{fill:var(--text-dim); font-size:10.5px; font-family:Consolas,monospace; text-anchor:middle;}
+  .cx-axtitle{fill:var(--text-dim); font-size:11px; text-anchor:middle;}
+  .cx-ytitle{fill:var(--text-dim); font-size:11px; text-anchor:middle;}
+  .cx-endlab{font-size:11px; font-family:Consolas,monospace;}
+  .cx-cursor{stroke:var(--accent2); stroke-width:1; opacity:.6; stroke-dasharray:2 3;}
+  .cx-curve{transition:opacity .1s;}
+  .cx-readout{margin-top:8px; font-size:13px; color:var(--text-dim); min-height:20px; line-height:1.5;}
+  @media print{ .cx-svg{max-width:100%;} .cx-scale,.cx-slider,.cx-legend{display:none;} }
+
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--bg3); border-radius:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  @media (max-width:900px){ #layout{flex-direction:column;} #sidebar{width:100%; min-width:0; height:auto; position:static;}
+    #main{padding:76px 20px 60px;} #sec-head,#head-zone{left:0;} }
+  /* ===== Home: герой + прогрес + продовжити ===== */
+  .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
+    border:1px solid var(--border); border-radius:16px; padding:26px 28px; margin-bottom:22px;}
+  .home-hero h2{font-size:27px; color:var(--head); font-weight:normal; margin:0 0 6px;}
+  .home-hero .ded{color:var(--text-dim); font-size:14px; margin-bottom:18px; font-style:italic;}
+  .hero-row{display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
+  .ring{--p:0; width:104px; height:104px; border-radius:50%; flex:0 0 auto; position:relative;
+    background:conic-gradient(var(--done) calc(var(--p)*1%), var(--bg) 0);}
+  .ring::after{content:""; position:absolute; inset:9px; border-radius:50%; background:var(--bg2);}
+  .ring .rt{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; z-index:1;}
+  .ring .rt b{font-size:24px; color:var(--head);} .ring .rt span{font-size:11px; color:var(--text-dim);}
+  .hero-mid{flex:1; min-width:200px;}
+  .hero-stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .chip{display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border);
+    border-radius:999px; padding:6px 13px; font-size:13px; color:var(--text);}
+  .chip b{color:var(--head);}
+  .chip.streak{border-color:var(--note); color:var(--note);}
+  .hero-cta{display:flex; gap:10px; flex-wrap:wrap;}
+  .btn.big{min-height:46px; padding:0 22px; font-size:16px; border-radius:10px;}
+
+  /* ===== порівняння рівнів ===== */
+  .lvl-head{display:flex; align-items:center; gap:14px; font-size:14px; color:var(--head);
+    font-weight:bold; text-transform:uppercase; letter-spacing:2px; margin:30px 0 4px;}
+  .lvl-head::after{content:""; flex:1; height:1px;
+    background:linear-gradient(90deg, var(--accent), transparent);}
+  .lvl-sub{color:var(--text-dim); font-size:13.5px; margin-bottom:14px;}
+  .lvl-grid{display:flex; gap:14px; flex-wrap:wrap; align-items:stretch;}
+  .lvl-card{flex:1; min-width:210px; background:var(--bg2); border:1px solid var(--border);
+    border-top-width:3px; border-radius:12px; padding:16px 18px; display:flex; flex-direction:column;}
+  .lvl-card.junior{border-top-color:var(--lv-j);} .lvl-card.middle{border-top-color:var(--lv-m);}
+  .lvl-card.senior{border-top-color:var(--lv-s);}
+  .lvl-card.cur{box-shadow:0 0 0 2px var(--accent) inset;}
+  .lvl-card .lh{display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;}
+  .lvl-card .lname{font-size:18px;} .lvl-card.junior .lname{color:var(--lv-j);}
+  .lvl-card.middle .lname{color:var(--lv-m);} .lvl-card.senior .lname{color:var(--lv-s);}
+  .lvl-card .badge-cur{font-size:10.5px; text-transform:uppercase; letter-spacing:.6px;
+    background:var(--accent); color:#fff; border-radius:5px; padding:2px 7px;}
+  .lvl-card .lcount{font-size:13px; color:var(--text-dim); margin-bottom:10px;}
+  .lvl-card .adds{list-style:none; margin:0 0 14px; padding:0; font-size:13.5px; flex:1;}
+  .lvl-card .adds li{margin:0 0 7px; padding-left:20px; position:relative; color:var(--text);}
+  .lvl-card .adds li::before{content:"+"; position:absolute; left:0; color:var(--done); font-weight:bold;}
+  .lvl-card .adds li.base::before{content:"\2713"; color:var(--text-dim);}
+  .lvl-card .btn{width:100%;}
+
+  /* ===== модулі на Home ===== */
+  .mod-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-top:1px solid var(--border); cursor:pointer;}
+  .mod-row:hover{background:var(--bg2);}
+  .mod-row .mnum{font-family:Consolas,monospace; font-size:13px; color:var(--text-dim); min-width:22px;}
+  .mod-row .mname{flex:1; font-size:15px; color:var(--text);}
+  .mod-row .mbar{width:90px; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden;}
+  .mod-row .mbar i{display:block; height:100%; background:var(--done); border-radius:3px;}
+  .mod-row .mfrac{font-size:12px; color:var(--text-dim); min-width:34px; text-align:right;}
+
+  /* ===== CTA в кінці уроку ===== */
+  .lesson-cta{margin-top:40px; padding:20px 22px; border:1px solid var(--border); border-radius:14px;
+    background:linear-gradient(135deg, var(--bg2), var(--bg3)); text-align:center;}
+  .lesson-cta.done{border-color:var(--done);}
+  .lesson-cta .ct{color:var(--head); font-size:16px; margin-bottom:14px;}
+  .lesson-cta .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+  /* сайдбар: прогрес модуля в дереві */
+  .toc-mod .mtitle{position:relative;}
+  .mprog{height:3px; background:var(--done); border-radius:2px; margin-top:5px; transition:width .3s;
+    box-shadow:0 0 8px rgba(0,204,255,.35);}
+
+  /* ================= НЕОН (лише темна тема) ================= */
+  html:not(.light) body{
+    background:
+      radial-gradient(1100px 560px at 82% -8%, rgba(0,204,255,.045), transparent 60%),
+      radial-gradient(820px 480px at -8% 16%, rgba(204,68,255,.035), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;}
+  html:not(.light) #sidebar{background:linear-gradient(180deg, rgba(0,204,255,.04), transparent 40%), var(--bg2);}
+
+  /* герой */
+  html:not(.light) .home-hero{
+    background:linear-gradient(135deg, rgba(0,204,255,.09), rgba(204,68,255,.07)), var(--bg2);
+    border-color:rgba(0,204,255,.28);
+    box-shadow:var(--glow-cyan), inset 0 1px 0 rgba(255,255,255,.04);}
+  html:not(.light) .home-hero h2{text-shadow:0 0 26px rgba(0,204,255,.28);}
+  html:not(.light) .ring{box-shadow:0 0 24px rgba(0,204,255,.22);}
+  html:not(.light) .ring .rt b{text-shadow:0 0 14px rgba(0,204,255,.5);}
+
+  /* головні кнопки — градієнт + світіння */
+  html:not(.light) .btn.primary{
+    background:linear-gradient(135deg, #00ccff, #cc44ff);
+    border-color:transparent; color:#06121a; font-weight:bold;
+    box-shadow:var(--glow-cyan);}
+  html:not(.light) .btn.primary:hover{
+    filter:brightness(1.1); background:linear-gradient(135deg, #00ccff, #cc44ff);
+    box-shadow:0 0 28px rgba(0,204,255,.55);}
+  html:not(.light) .btn:hover{border-color:var(--neon); box-shadow:0 0 0 1px rgba(0,204,255,.35);}
+
+  /* чіпи, серія, картки рівнів */
+  html:not(.light) .chip.streak{border-color:rgba(255,85,187,.55); color:#ff77c8; box-shadow:var(--glow-pink);}
+  html:not(.light) .lvl-card:hover{border-color:rgba(0,204,255,.35);}
+  html:not(.light) .lvl-card.cur{box-shadow:0 0 0 1px var(--neon) inset, var(--glow-cyan);}
+  html:not(.light) .lvl-card.junior{border-top-color:var(--lv-j); box-shadow:inset 0 3px 0 -1px rgba(57,217,138,.4);}
+  html:not(.light) .lvl-card.senior{border-top-color:var(--lv-s);}
+
+  /* CTA в кінці уроку */
+  html:not(.light) .lesson-cta{
+    background:linear-gradient(135deg, rgba(0,204,255,.07), rgba(204,68,255,.05)), var(--bg2);
+    border-color:rgba(0,204,255,.22);}
+  html:not(.light) .lesson-cta.done{border-color:rgba(57,217,138,.4); box-shadow:0 0 20px rgba(57,217,138,.15);}
+
+  /* активний урок і бейдж «пройдено» */
+  html:not(.light) .toc-les.active{box-shadow:inset 3px 0 0 var(--neon), 0 0 16px rgba(0,204,255,.12);}
+  html:not(.light) .read-badge{box-shadow:0 0 14px rgba(57,217,138,.4);}
+  html:not(.light) .sec-title{text-shadow:0 0 22px rgba(0,204,255,.12);}
+  html:not(.light) .lvl-head{color:var(--neon); text-shadow:0 0 14px rgba(0,204,255,.3);}
+  html:not(.light) .mod-row:hover{background:linear-gradient(90deg, rgba(0,204,255,.06), transparent);}
+</style>
+<script>/* застосувати збережену тему до першого рендеру, без «блимання» */
+try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentElement.classList.add('light'); }catch(e){}
+</script>
+</head>
+<body>
+<div id="lvgate" style="display:none"><div class="box">
+  <h1>Інтерактивний курс C++</h1>
+  <div class="sub">Оберіть рівень. Від нього залежить, скільки теорії, проєктів і питань
+    з'явиться в кожному уроці. Рівень можна змінити будь-коли в лівій панелі.</div>
+  <div class="cards" id="lvcards"></div>
+  <div class="hint">Рівень накопичувальний: middle бачить усе junior + своє, senior — усе.</div>
+</div></div>
+
+<!-- екран вводу ліцензійного ключа (онлайн-режим) -->
+<div id="keygate" style="display:none"><div class="box" style="max-width:460px">
+  <h1>Інтерактивний курс C++</h1>
+  <div class="sub">Доступ за ліцензійним ключем. Введіть пошту, на яку видано ключ,
+    і сам ключ. Один ключ працює на одному пристрої.</div>
+  <div class="kg-form">
+    <label>Пошта</label>
+    <input id="kg-email" type="email" autocomplete="email" placeholder="you@example.com">
+    <label>Ліцензійний ключ</label>
+    <input id="kg-key" type="text" autocomplete="off" placeholder="CPP-XXXX-XXXX-XXXX">
+    <button class="btn" id="kg-btn" onclick="doActivate()">Увійти</button>
+    <div id="kg-err" class="kg-err"></div>
+  </div>
+</div></div>
+
+<div id="layout" style="display:none">
+  <nav id="sidebar">
+    <h1 id="course-title"></h1>
+    <div class="authors" id="course-sub"></div>
+    <div id="lvswitch"></div>
+    <input id="search" type="search" placeholder="Пошук по курсу… (мін. 3 символи)">
+    <div id="search-results"></div>
+    <div id="progress"></div>
+    <div id="toc"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div id="gtip"></div>
+<div id="ctxmenu"><button onclick="openEditDialog()">✎ Edit Selected Text</button></div>
+
+<div id="editdlg"><div class="dlg">
+  <h3>Пропозиція щодо редагування</h3>
+  <div class="where" id="ed-where"></div>
+  <div class="quote" id="ed-quote"></div>
+  <textarea id="ed-text" placeholder="Що саме виправити або переписати…"></textarea>
+  <div class="row">
+    <button class="btn" onclick="closeEditDialog()">Скасувати</button>
+    <button class="btn" onclick="saveEditNote()">Зберегти замітку</button>
+  </div>
+</div></div>
+
+<div id="notetab" onclick="toggleNoteBar()">замітки <span class="cnt" id="nb-count">0</span></div>
+<div id="notebar">
+  <div class="nb-head">
+    <span class="t">Замітки до уроку</span>
+    <button class="btn tiny" onclick="openNotesPage()" title="усі замітки окремою сторінкою">↗</button>
+    <button class="btn tiny" onclick="toggleNoteBar()">✕</button>
+  </div>
+  <div class="nb-body" id="nb-body"></div>
+  <div class="nb-foot">
+    <button class="btn tiny" onclick="exportEditNotes()">💾 Зберегти у файл</button>
+  </div>
+</div>
+
+<script>
+document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="api.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="store.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="curriculum.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="glossary.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="editnotes.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script>
+/* Контент і тести — лише в ОФЛАЙН-режимі. В онлайн-режимі (заданий API_BASE)
+   вони НЕ вантажаться з github.io, а тягнуться з бекенду за ліцензією. */
+if (!window.API_BASE) {
+  document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="tests.js?v=' + Date.now() + '"><\/script>');
+}
+</script>
+<script>
+/* якщо згенерованих файлів ще немає — пояснити, а не падати */
+if (typeof window.COURSE === 'undefined') {
+  document.body.innerHTML =
+    '<div style="max-width:640px;margin:12vh auto;padding:24px;font-family:Georgia,serif;color:#c6cad1">'+
+    '<h1 style="font-weight:normal;color:#dfe3e8;font-size:24px;margin-bottom:12px">Курс ще не зібрано</h1>'+
+    '<p style="margin-bottom:12px">Немає файлів <code>curriculum.js</code> / <code>data.js</code> / <code>tests.js</code> — '+
+    'вони генеруються зі <code>curriculum.json</code>, <code>content/</code> і <code>tests/</code>.</p>'+
+    '<p>Двічі клацни <b>rebuild.bat</b> у папці курсу й онови цю сторінку.</p></div>';
+  throw new Error('course not built');
+}
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+/* онлайн-режим (ліцензія + бекенд) чи офлайн (локальні файли) */
+const ONLINE = !!window.API_BASE;
+window.COURSE_CONTENT = window.COURSE_CONTENT || {};
+window.COURSE_TESTS   = window.COURSE_TESTS   || {};
+let hbTimer = null;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const LVNAME = {junior:'Junior', middle:'Middle', senior:'Senior'};
+/* походження, які НЕ показуємо як окремий тег/джерело (це основа курсу) */
+const HIDDEN_ORIGINS = new Set(['gl','prometheus','added','book']);
+
+function hl(src){
+  const s = esc(src);
+  const kw = 'int|char|bool|void|float|double|unsigned|signed|long|short|const|constexpr|consteval|static|extern|inline|mutable|typedef|using|namespace|struct|class|union|enum|template|typename|return|if|else|for|while|do|switch|case|break|continue|new|delete|this|true|false|nullptr|sizeof|alignas|alignof|auto|decltype|operator|public|private|protected|virtual|override|final|friend|try|throw|catch|noexcept|explicit|thread_local|volatile|static_cast|dynamic_cast|const_cast|reinterpret_cast';
+  const re = new RegExp('(\\/\\/[^\\n]*)|("(?:[^"\\\\\\n]|\\\\.)*")|(^[ \\t]*#\\w+)|(\\b(?:'+kw+')\\b)|(\\b\\d+\\b)','gm');
+  return s.replace(re, function(m,com,str,pp,kwm,num){
+    if(com) return '<span class="com">'+com+'</span>';
+    if(str) return '<span class="str">'+str+'</span>';
+    if(pp)  return '<span class="pp">'+pp+'</span>';
+    if(kwm) return '<span class="kw">'+kwm+'</span>';
+    if(num) return '<span class="num">'+num+'</span>';
+    return m;
+  });
+}
+
+/* ================= markdown =================
+   контейнери:
+     :::note                      доповнення
+     :::example Заголовок         приклад (рядок "proj: Ім'я" -> підпис проєкту)
+     :::deep Заголовок            згортуване глибше пояснення
+     :::std C++11 vs C++17 …      згортуване порівняння стандартів
+     :::middle Заголовок          блок рівня middle (ховається на junior)
+     :::senior Заголовок          блок рівня senior
+     :::junior Заголовок          блок рівня junior (видно завжди)
+*/
+function renderMD(src){
+  const fences=[];
+  src = String(src).replace(/```[a-zA-Z+]*\r?\n([\s\S]*?)```/g, (m,c)=>{ fences.push(c.replace(/\s+$/,'')); return 'F'+(fences.length-1)+''; });
+
+  function inline(s){
+    const codes=[];
+    s = s.replace(/`([^`]+)`/g, (m,c)=>{ codes.push(c); return 'C'+(codes.length-1)+''; });
+    s = esc(s);
+    s = s.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    s = s.replace(/\*([^*\n]+)\*/g,'<em>$1</em>');
+    s = s.replace(/C(\d+)/g, (m,i)=>'<code>'+esc(codes[+i])+'</code>');
+    return s;
+  }
+
+  function renderBlocks(lines){
+    let out='', para=[], list=null;
+    const flushPara=()=>{ if(para.length){ out+='<p>'+inline(para.join(' '))+'</p>'; para=[]; } };
+    const flushList=()=>{ if(list){ out+='<'+list.type+'>'+list.items.map(i=>'<li>'+inline(i)+'</li>').join('')+'</'+list.type+'>'; list=null; } };
+    /* розбір рядка таблиці: |a|b|c| -> ['a','b','c'] */
+    const cells = l => {
+      let s = l.trim();
+      if(s.charAt(0) === '|') s = s.slice(1);
+      if(s.charAt(s.length-1) === '|') s = s.slice(0,-1);
+      return s.split('|').map(c=>c.trim());
+    };
+    const isSep = l => l.indexOf('|')>=0 && l.indexOf('-')>=0 && /^[\s:|-]+$/.test(l);
+
+    for(let li=0; li<lines.length; li++){
+      const raw = lines[li];
+      const line = raw.replace(/\s+$/,'');
+
+      /* ---- таблиця: рядок із | , під ним рядок-роздільник ---- */
+      if(line.trim().charAt(0) === '|' && li+1 < lines.length && isSep(lines[li+1])){
+        flushPara(); flushList();
+        const head = cells(line);
+        const align = cells(lines[li+1]).map(c=>
+          /^:.*:$/.test(c) ? 'center' : /:$/.test(c) ? 'right' : 'left');
+        const rows = [];
+        let j = li + 2;
+        while(j < lines.length && lines[j].trim().charAt(0) === '|'){
+          rows.push(cells(lines[j])); j++;
+        }
+        li = j - 1;
+        out += '<table class="md"><thead><tr>' +
+          head.map((h,i)=>'<th style="text-align:'+(align[i]||'left')+'">'+inline(h)+'</th>').join('') +
+          '</tr></thead><tbody>' +
+          rows.map(r=>'<tr>'+r.map((c,i)=>
+            '<td style="text-align:'+(align[i]||'left')+'">'+inline(c)+'</td>').join('')+'</tr>').join('') +
+          '</tbody></table>';
+        continue;
+      }
+
+      const fm = line.match(/^F(\d+)$/);
+      if(fm){ flushPara(); flushList(); out+='<pre><code>'+esc(fences[+fm[1]])+'</code></pre>'; continue; }
+      if(!line.trim()){ flushPara(); flushList(); continue; }
+      let m;
+      if(m=line.match(/^####\s+(.*)/)){ flushPara(); flushList(); out+='<h4>'+inline(m[1])+'</h4>'; continue; }
+      if(m=line.match(/^###\s+(.*)/)){ flushPara(); flushList(); out+='<h3>'+inline(m[1])+'</h3>'; continue; }
+      if(m=line.match(/^-\s+(.*)/)){ flushPara(); if(!list||list.type!=='ul'){flushList(); list={type:'ul',items:[]};} list.items.push(m[1]); continue; }
+      if(m=line.match(/^\d+\.\s+(.*)/)){ flushPara(); if(!list||list.type!=='ol'){flushList(); list={type:'ol',items:[]};} list.items.push(m[1]); continue; }
+      if(list){ list.items[list.items.length-1] += ' '+line.trim(); continue; }
+      para.push(line.trim());
+    }
+    flushPara(); flushList();
+    return out;
+  }
+
+  function stdBadges(title){
+    return esc(title).replace(/C\+\+(11|14|17|20|23)/g,
+      (m,v)=>'<span class="stdb b'+v+'">C++'+v+'</span>');
+  }
+
+  const KINDS = ['note','example','deep','std','junior','middle','senior','ref','book','widget'];
+  const isOpen  = l => { const m = l.match(/^:::(\w+)\s*(.*)$/); return (m && KINDS.indexOf(m[1])>=0) ? m : null; };
+  const isClose = l => /^:::\s*$/.test(l);
+
+  /* контейнери можуть вкладатися: :::deep всередині :::middle тощо */
+  function renderContainers(lines){
+    let html='', buf=[], cont=null, contHead='', depth=0;
+    const flushBuf=()=>{ if(buf.length){ html+=renderBlocks(buf); buf=[]; } };
+    for(const line of lines){
+      if(!cont){
+        const o = isOpen(line);
+        if(o){ flushBuf(); cont=o[1]; contHead=o[2].trim(); depth=1; continue; }
+        buf.push(line); continue;
+      }
+      /* всередині контейнера рахуємо вкладеність */
+      if(isOpen(line)){ depth++; buf.push(line); continue; }
+      if(isClose(line)){
+        depth--;
+        if(depth > 0){ buf.push(line); continue; }
+      } else { buf.push(line); continue; }
+
+      /* depth === 0 -> закриваємо поточний контейнер */
+      let proj='';
+      const body = buf.filter(l=>{
+        const pm=l.match(/^proj:\s*(.+)$/);
+        if(pm){ proj=pm[1].trim(); return false; }
+        return true;
+      });
+      const inner = renderContainers(body);
+      if(cont==='note')
+        html+='<div class="cnote"><span class="lbl">Доповнення</span>'+inner+'</div>';
+      else if(cont==='deep')
+        html+='<details class="xblock deep"><summary>&#128269; '+esc(contHead)+
+              ' <span style="opacity:.6;font-size:11px">(доповнення — клікни)</span></summary>'+
+              '<div class="xbody">'+inner+'</div></details>';
+      else if(cont==='std')
+        html+='<details class="xblock stdcmp"><summary>'+stdBadges(contHead)+'</summary>'+
+              '<div class="xbody">'+inner+'</div></details>';
+      else if(cont==='ref')
+        html+='<details class="xblock refblock"><summary>&#128218; cppreference &middot; '+esc(contHead)+
+              ' <span style="opacity:.6;font-size:11px">(переклад і пояснення)</span></summary>'+
+              '<div class="xbody">'+inner+'</div></details>';
+      else if(cont==='book')
+        html+='<details class="xblock bookblock"><summary>&#128214; Книжка &middot; '+esc(contHead)+
+              '</summary><div class="xbody">'+inner+'</div></details>';
+      else if(cont==='widget')
+        html+='<div class="mdwidget" data-widget="'+esc(contHead.trim())+'"></div>';
+      else if(cont==='junior'||cont==='middle'||cont==='senior'){
+        if(CourseStore.visible(cont))
+          html+='<div class="lvblock '+cont+'"><div class="lvhead">'+LVNAME[cont]+
+                (contHead? ' &middot; '+esc(contHead):'')+'</div>'+inner+'</div>';
+      }
+      else
+        html+='<div class="example-box"><div class="ex-head">'+esc(contHead)+'</div>'+inner+'</div>';
+      buf=[]; cont=null; contHead=''; depth=0;
+    }
+    /* незакритий контейнер наприкінці — виводимо як звичайний текст */
+    if(cont){ html += renderBlocks(buf); }
+    else flushBuf();
+    return html;
+  }
+
+  return renderContainers(src.split(/\r?\n/));
+}
+
+/* ================= структура ================= */
+const flat = [];
+COURSE.modules.forEach(mod=>{ mod.lessons.forEach(les=>{
+  les._mod = mod;
+  les.md = (window.COURSE_CONTENT && COURSE_CONTENT[les.id]) || null;
+  flat.push(les);
+});});
+
+/* уроки, видимі на поточному рівні */
+const visLessons = () => flat.filter(l=>CourseStore.visible(l.level));
+const visReady   = () => visLessons().filter(l=>l.md);
+function quizBank(id){
+  const all = (window.COURSE_TESTS && COURSE_TESTS[id]) || [];
+  return all.filter(q=>CourseStore.visible(q.lvl));
+}
+
+/* ================= вибір рівня ================= */
+function renderGate(){
+  $('#lvcards').innerHTML = COURSE.levels.map(l=>{
+    const n = flat.filter(x=>CourseStore.levelIndex(x.level) <= CourseStore.levelIndex(l.id)).length;
+    return '<div class="lvcard '+l.id+'" onclick="chooseLevel(\''+l.id+'\')">'+
+      '<div class="nm">'+esc(l.label)+'</div><div class="ds">'+esc(l.desc)+'</div>'+
+      '<div class="cnt">'+n+' уроків у програмі</div></div>';
+  }).join('');
+  $('#lvgate').style.display='flex';
+  $('#layout').style.display='none';
+}
+function chooseLevel(l){
+  CourseStore.setLevel(l);
+  $('#lvgate').style.display='none';
+  $('#layout').style.display='flex';
+  boot();
+}
+/* зміна рівня ЗАВЖДИ відкриває Home з модулями обраного рівня —
+   незалежно від того, початий курс чи ні */
+function switchLevel(l){
+  CourseStore.setLevel(l);
+  renderLvSwitch(); refreshUI();
+  openHome();
+}
+function chooseLevelHome(l){ switchLevel(l); }
+function renderLvSwitch(){
+  // онлайн-режим: рівень диктує ключ, перемикач не показуємо (лише мітку)
+  if(ONLINE){
+    const lv = CourseStore.getLevel();
+    $('#lvswitch').innerHTML = '<span class="lvl-badge '+lv+'"><i></i>Рівень: <b>'+LVNAME[lv]+'</b></span>'+
+      '<span class="tip" data-tip="Відв’язує ліцензійний ключ від цього комп’ютера, щоб можна було увійти з іншого. '+
+      'Кількість перенесень на нові пристрої обмежена.">'+
+      '<button class="btn tiny" onclick="releaseDevice()">Звільнити пристрій</button></span>';
+    return;
+  }
+  $('#lvswitch').innerHTML = COURSE.levels.map(l=>
+    '<button data-l="'+l.id+'" class="'+(CourseStore.getLevel()===l.id?'on':'')+
+    '" onclick="switchLevel(\''+l.id+'\')" title="'+esc(l.desc)+'">'+esc(l.label)+'</button>').join('');
+}
+
+/* ================= TOC ================= */
+function renderTOC(){
+  const el = $('#toc'); el.innerHTML='';
+
+  // головна сторінка над списком модулів
+  const mp = document.createElement('div');
+  mp.className = 'toc-mod';
+  const mpt = document.createElement('div');
+  mpt.className = 'mtitle';
+  mpt.innerHTML = '&#127968; Home';
+  mpt.onclick = openHome;
+  mp.appendChild(mpt);
+  el.appendChild(mp);
+
+  COURSE.modules.forEach(mod=>{
+    const lessons = mod.lessons.filter(l=>CourseStore.visible(l.level));
+    if(!lessons.length) return;
+    const div = document.createElement('div'); div.className='toc-mod';
+    const t = document.createElement('div'); t.className='mtitle';
+    const doneN = lessons.filter(l=>CourseStore.isDone(l.id)).length;
+    t.innerHTML = esc(mod.num+'. '+mod.title) +
+                  (!HIDDEN_ORIGINS.has(mod.from)
+                    ? '<span class="origin '+esc(mod.from)+' dot" title="'+
+                      esc((COURSE.origins[mod.from]||{}).label||'')+'"></span>' : '') +
+                  '<span class="mcount">'+doneN+'/'+lessons.length+'</span>';
+    div.appendChild(t);
+    const pb = document.createElement('div');
+    pb.className = 'mprog';
+    pb.style.width = (lessons.length? Math.round(doneN/lessons.length*100):0) + '%';
+    div.appendChild(pb);
+    const wrap = document.createElement('div');
+    wrap.style.display = 'none';
+    lessons.forEach(les=>{
+      const s = document.createElement('div');
+      s.className = 'toc-les ' + (CourseStore.isDone(les.id)?'done': (les.md||ONLINE)?'ready':'empty');
+      s.dataset.id = les.id;
+      const qz = CourseStore.getQuiz(les.id);
+      s.innerHTML = esc(les.num+' '+les.title) +
+        (les.level!=='junior'? '<span class="lvtag '+les.level+'">'+les.level[0].toUpperCase()+'</span>':'') +
+        (les.from && les.from!==mod.from && !HIDDEN_ORIGINS.has(les.from)?
+          '<span class="origin '+esc(les.from)+' dot" title="'+
+          esc((COURSE.origins[les.from]||{}).label||'')+'"></span>':'') +
+        (qz? '<span class="qbadge">&#128221;'+qz.best+'/'+qz.total+'</span>':'');
+      s.onclick = ()=>openLesson(les.id);
+      if(!les.md) s.title = 'Урок ще не написаний — у програмі як план';
+      wrap.appendChild(s);
+    });
+    div.appendChild(wrap);
+    t.onclick = ()=>{ wrap.style.display = wrap.style.display==='none'?'':'none'; };
+    el.appendChild(div);
+  });
+  const cur = CourseStore.getLastLesson();
+  if(cur){
+    const node = document.querySelector('.toc-les[data-id="'+cur+'"]');
+    if(node){ node.classList.add('active'); node.parentElement.style.display=''; }
+  }
+}
+
+function renderProgress(){
+  const vis = visLessons(), ready = visReady();
+  const done = vis.filter(l=>CourseStore.isDone(l.id)).length;
+  const pct = vis.length? Math.round(done/vis.length*100) : 0;
+  $('#progress').innerHTML =
+    'Рівень <b style="color:var(--lv-'+CourseStore.getLevel()[0]+')">'+LVNAME[CourseStore.getLevel()]+'</b>: '+
+    vis.length+' уроків'+
+    '<br>пройдено: <span style="color:var(--done)">'+done+' ('+pct+'%)</span>'+
+    '<div class="bar"><div class="fill" style="width:'+pct+'%"></div></div>'+
+    '<div class="stats">'+
+      (CourseStore.streak()>0? '<span style="color:var(--note)">&#128293; '+CourseStore.streak()+' '+plural(CourseStore.streak(),'день','дні','днів')+' поспіль</span> · ':'')+
+      'сьогодні: '+CourseStore.statToday()+' · за 7 днів: '+CourseStore.statWeek()+'</div>'+
+    heatmapHTML();
+}
+function heatmapHTML(){
+  const log = CourseStore.state.readLog || {};
+  let cells = '';
+  for(let i = 27; i >= 0; i--){
+    const d = new Date(Date.now() - i*864e5).toISOString().slice(0,10);
+    const n = log[d] || 0;
+    const lvl = n===0? '' : n<2? ' l1' : n<4? ' l2' : n<7? ' l3' : ' l4';
+    cells += '<span class="hm'+lvl+'" title="'+d+': '+n+' уроків"></span>';
+  }
+  return '<div id="heatmap">'+cells+'</div>';
+}
+function refreshUI(){ renderTOC(); renderProgress(); }
+
+/* наступний урок для «Продовжити»: незавершений останній → перший незавершений → перший */
+function nextLesson(){
+  const seq = visLessons();
+  if(!seq.length) return null;
+  const last = CourseStore.getLastLesson();
+  if(last){
+    const l = seq.find(x=>x.id===last);
+    if(l && !CourseStore.isDone(l.id)) return l;
+  }
+  return seq.find(x=>!CourseStore.isDone(x.id)) || seq[seq.length-1];
+}
+
+/* що додає кожен рівень (наочно) */
+const LVL_ADDS = {
+  junior: ['Синтаксис, типи, пам’ять','ООП: класи, наслідування, поліморфізм','STL: контейнери й алгоритми','Перші алгоритмічні задачі й тести'],
+  middle: ['Механіка пам’яті, копіювання/переміщення','Шаблони, винятки, багатопотоковість','Складність і свідомий вибір контейнера','Інструменти: Git, CMake, юніт-тести'],
+  senior: ['UB, ABI, модель пам’яті','Оптимізації: inline, RVO/copy elision, LTO','Атоміки, lock-free, патерни проєктування','Проєктування API, переносність, компроміси']
+};
+
+/* ================= головна ================= */
+function openHome(){
+  const vis = visLessons();
+  const mods = COURSE.modules.filter(m=>m.lessons.some(l=>CourseStore.visible(l.level)));
+  const done = vis.filter(l=>CourseStore.isDone(l.id)).length;
+  const pct = vis.length? Math.round(done/vis.length*100) : 0;
+  const streak = CourseStore.streak();
+  const curLv = CourseStore.getLevel();
+  const nx = nextLesson();
+  const started = !!CourseStore.getLastLesson() || done>0;
+
+  let html = '<div id="sec-head"><div class="sh-row"><span class="sh-title">Головна</span>'+
+    '<span class="sh-sp"></span>'+ headerToolsHTML()+
+    '<button class="btn tiny" onclick="bumpFont(-1)">A&minus;</button>'+
+    '<button class="btn tiny" onclick="bumpFont(1)">A+</button>'+
+    '</div></div><div class="content">';
+
+  // --- герой ---
+  html += '<div class="home-hero">'+
+    '<h2>'+esc(COURSE.title)+'</h2>'+
+    (COURSE.subtitle? '<div class="ded">'+esc(COURSE.subtitle)+'</div>':'')+
+    '<div class="hero-row">'+
+      '<div class="ring" style="--p:'+pct+'"><div class="rt"><b>'+pct+'%</b><span>пройдено</span></div></div>'+
+      '<div class="hero-mid">'+
+        '<div class="hero-stats">'+
+          '<span class="chip">пройдено <b>'+done+'</b>/'+vis.length+' уроків</span>'+
+          (streak>0? '<span class="chip streak">&#128293; '+streak+' '+plural(streak,'день','дні','днів')+' поспіль</span>':'')+
+          '<span class="chip">сьогодні <b>'+CourseStore.statToday()+'</b></span>'+
+        '</div>'+
+        '<div class="hero-cta">'+
+          (nx? '<button class="btn primary big" onclick="openLesson(\''+nx.id+'\')">'+
+               (started?'Продовжити':'Почати курс')+' &rarr;</button>':'')+
+          (nx? '<span class="chip" style="align-self:center">'+esc(nx.num+' '+nx.title)+'</span>':'')+
+        '</div>'+
+      '</div>'+
+    '</div></div>';
+
+  // --- порівняння рівнів ---
+  const levels = COURSE.levels;
+  const cntAt = {}; levels.forEach(lv=> cntAt[lv.id] = COURSE.modules.reduce((a,m)=>a+m.lessons.filter(l=>l.level===lv.id).length,0));
+  let cum = 0;
+  html += '<div class="lvl-head">Рівні складності</div>'+
+    '<div class="lvl-sub">Рівні накопичувальні: кожен додає новий шар поверх попереднього. '+
+    (ONLINE?'Ваш рівень визначає ліцензійний ключ.':'Обрати рівень можна будь-коли.')+'</div>'+
+    '<div class="lvl-grid">';
+  levels.forEach(lv=>{
+    cum += cntAt[lv.id];
+    const isCur = lv.id===curLv;
+    const first = lv.id==='junior';
+    html += '<div class="lvl-card '+lv.id+(isCur?' cur':'')+'">'+
+      '<div class="lh"><span class="lname">'+esc(lv.label)+'</span>'+
+        (isCur?'<span class="badge-cur">ваш рівень</span>':'')+'</div>'+
+      '<div class="lcount">'+(first?'':'+ ')+'<b style="color:var(--head)">'+cntAt[lv.id]+'</b> '+
+        plural(cntAt[lv.id],'урок','уроки','уроків')+(first?' бази':' поверх попереднього')+
+        ' · доступно '+cum+'</div>'+
+      '<ul class="adds">'+
+        (first?'<li class="base">'+esc(lv.desc.split(':')[0])+'</li>':'')+
+        LVL_ADDS[lv.id].map(a=>'<li>'+esc(a)+'</li>').join('')+
+      '</ul>'+
+      (ONLINE
+        ? (isCur?'<button class="btn" disabled style="opacity:.6;cursor:default">Активний</button>'
+                :'<button class="btn ghost" disabled style="opacity:.5;cursor:default">За іншим ключем</button>')
+        : (isCur?'<button class="btn primary" disabled style="opacity:.85;cursor:default">Ваш рівень</button>'
+                :'<button class="btn" onclick="chooseLevelHome(\''+lv.id+'\')">Перейти на '+esc(lv.label)+'</button>'))+
+      '</div>';
+  });
+  html += '</div>';
+
+  // --- модулі з прогресом ---
+  html += '<div class="lvl-head">Модулі курсу</div><div class="lvl-sub">'+mods.length+' модулів на вашому рівні.</div>';
+  mods.forEach(m=>{
+    const ls = m.lessons.filter(l=>CourseStore.visible(l.level));
+    const dn = ls.filter(l=>CourseStore.isDone(l.id)).length;
+    const p = ls.length? Math.round(dn/ls.length*100):0;
+    const firstId = (ls.find(l=>!CourseStore.isDone(l.id))||ls[0]).id;
+    html += '<div class="mod-row" onclick="openLesson(\''+firstId+'\')">'+
+      '<span class="mnum">'+String(m.num).padStart(2,'0')+'</span>'+
+      '<span class="mname">'+esc(m.title)+'</span>'+
+      '<span class="mbar"><i style="width:'+p+'%"></i></span>'+
+      '<span class="mfrac">'+dn+'/'+ls.length+'</span></div>';
+  });
+
+  html += '</div>';
+  $('#main').innerHTML = html;
+  updateHead();
+}
+/* 1 день / 2 дні / 5 днів */
+function plural(n, one, few, many){
+  const m10=n%10, m100=n%100;
+  if(m10===1 && m100!==11) return one;
+  if(m10>=2 && m10<=4 && (m100<10||m100>=20)) return few;
+  return many;
+}
+
+/* ================= урок ================= */
+async function openLesson(id, scrollTop){
+  const les = flat.find(l=>l.id===id);
+  if(!les) return;
+  // онлайн-режим: підвантажуємо вміст уроку з бекенду (один раз, з кешем)
+  if(ONLINE && les.md == null && window.COURSE_CONTENT[id] === undefined){
+    try{
+      $('#main').innerHTML = '<div class="content"><p style="color:var(--text-dim);padding:24px">Завантаження уроку…</p></div>';
+      const d = await CourseAPI.lesson(id);
+      window.COURSE_CONTENT[id] = d.md || '';
+      les.md = window.COURSE_CONTENT[id];
+      if(d.test){ try{ (new Function(d.test))(); }catch(e){} }   // наповнює COURSE_TESTS[id]
+    }catch(e){
+      if(e.status === 401){ onSessionLost(); return; }
+      $('#main').innerHTML = '<div class="content"><p style="color:var(--note);padding:24px">Не вдалося завантажити урок: '+esc(e.message||'помилка')+'</p></div>';
+      return;
+    }
+  } else if(ONLINE && window.COURSE_CONTENT[id] !== undefined){
+    les.md = window.COURSE_CONTENT[id];
+  }
+  CourseStore.setLastLesson(id);
+  document.querySelectorAll('.toc-les').forEach(e=>e.classList.toggle('active', e.dataset.id===id));
+
+  const bank = quizBank(id);
+  const qres = CourseStore.getQuiz(id);
+  const deck = COURSE.decks[les.deck || les._mod.deck];
+  const from = les.from || les._mod.from;
+  /* «gl» — це основа курсу, тому окремо її не позначаємо */
+  const orig = HIDDEN_ORIGINS.has(from) ? null : (COURSE.origins[from] || null);
+  const projects = (les.projects||[]).filter(p=>CourseStore.visible(p.level));
+  const done = CourseStore.isDone(id);
+
+  let html = '<div id="sec-head"><div class="sh-row">'+
+    '<span class="sh-title" title="'+esc(les._mod.num+'. '+les._mod.title)+'">'+esc(les.num+' '+les.title)+'</span>'+
+    (les.level!=='junior'? '<span class="lvtag '+les.level+'">'+LVNAME[les.level]+'</span>':'')+
+    (done? '<span class="read-badge" title="урок пройдено">&#10003; пройдено</span>':'')+
+    '<span class="sh-sp"></span>'+
+    headerToolsHTML()+
+    '<button class="btn tiny" onclick="bumpFont(-1)">A&minus;</button>'+
+    '<button class="btn tiny" onclick="bumpFont(1)">A+</button>'+
+    '<button class="btn tiny" onclick="window.print()">&#128424;</button>'+
+    '</div></div><div class="content">';
+
+  html += '<div class="crumbs">Модуль '+les._mod.num+'. '+esc(les._mod.title)+'</div>';
+  html += '<h2 class="sec-title">'+esc(les.num+' '+les.title)+'</h2>';
+
+  html += les.md ? renderMD(les.md)
+        : '<div class="cnote"><span class="lbl">Статус</span><p>Урок є в програмі, але конспект ще не написаний.</p></div>';
+
+  if(les.cppref && les.cppref.length)
+    html += '<div class="infobox"><div class="ttl">&#128218; Документація cppreference</div><ul>'+
+      les.cppref.map(r=>'<li><a href="'+esc(r.u)+'" target="_blank" rel="noopener">'+
+        esc(r.u.replace(/^https:\/\/en\.cppreference\.com\/w\//,''))+'</a>'+
+        '<span class="why">'+esc(r.t)+'</span></li>').join('')+'</ul></div>';
+
+  if(les.book && les.book.length)
+    html += '<div class="infobox"><div class="ttl">&#128214; Книжка «Об\'єктні технології C++11»</div><ul>'+
+      les.book.map(b=>'<li><b>'+esc(b.s)+'</b> '+esc(b.t)+
+        (b.p? ' <span class="why" style="display:inline">— с. '+b.p+'</span>':'')+'</li>').join('')+
+      '</ul></div>';
+
+  html += '</div>';
+
+  const seq = visLessons();
+  const i = seq.indexOf(les);
+  const nextId = i<seq.length-1 ? seq[i+1].id : null;
+  // великий CTA у кінці уроку
+  const testBtn = bank.length
+    ? '<button class="btn primary big" onclick="startQuiz(\''+id+'\')">&#128221; Тест ('+bank.length+
+        (qres? ' &middot; '+qres.best+'/'+qres.total : '')+')</button>'
+    : '';
+  html += '<div class="lesson-cta'+(done?' done':'')+'">';
+  if(done){
+    html += '<div class="ct">&#10003; Урок пройдено. '+(nextId?'Рухаймося далі!':'Це останній урок на вашому рівні — вітаємо!')+'</div>'+
+      '<div class="row">'+
+      (nextId? '<button class="btn primary big" onclick="openLesson(\''+nextId+'\')">Наступний урок &rarr;</button>':'')+
+      testBtn+
+      '<button class="btn ghost" onclick="toggleDone(\''+id+'\')">Зняти позначку</button></div>';
+  } else {
+    html += '<div class="ct">Опрацювали матеріал? Позначте урок, щоб рахувати прогрес і серію.</div>'+
+      '<div class="row">'+
+      '<button class="btn primary big" onclick="markDoneNext(\''+id+'\','+(nextId?'\''+nextId+'\'':'null')+')">'+
+        'Позначити пройденим'+(nextId?' і далі &rarr;':'')+'</button>'+
+      testBtn+
+      (nextId? '<button class="btn ghost" onclick="openLesson(\''+nextId+'\')">Пропустити &rarr;</button>':'')+
+      '</div>';
+  }
+  html += '</div>';
+  // компактна навігація попередній / наступний
+  html += '<div class="nav-btns"><span>'+
+    (i>0? '<button class="btn" onclick="openLesson(\''+seq[i-1].id+'\')">&larr; '+esc(seq[i-1].title)+'</button>':'')+
+    '</span><span></span><span>'+
+    (nextId? '<button class="btn" onclick="openLesson(\''+nextId+'\')">'+esc(seq[i+1].title)+' &rarr;</button>':'')+
+    '</span></div>';
+
+  $('#main').innerHTML = html;
+  document.querySelectorAll('#main pre code').forEach(c=>{ c.innerHTML = hl(c.textContent); });
+  applyGlossary(document.querySelector('#main .content'));
+  mountWidgets(document.querySelector('#main .content'));
+  renderNoteBar();
+  applyFont(); updateHead();
+  if(scrollTop!==false) window.scrollTo({top:0});
+}
+
+/* ================= інтерактивні віджети в конспекті ================= */
+function mountWidgets(root){
+  if(!root) return;
+  root.querySelectorAll('.mdwidget').forEach(el=>{
+    const w = WIDGETS[el.dataset.widget];
+    if(w) w(el);
+    else el.innerHTML = '<div style="color:var(--text-dim);font-size:13px">невідомий віджет: '+esc(el.dataset.widget)+'</div>';
+  });
+}
+const WIDGETS = {};
+
+/* --- графік асимптотичної складності --- */
+WIDGETS.complexity = function(host){
+  const fact = n => { let r=1; for(let i=2;i<=n;i++){ r*=i; if(r>1e300) return Infinity; } return r; };
+  const CURVES = [
+    { key:'1',     label:'O(1)',        color:'#7fae7f', fn:()=>1,                     on:true  },
+    { key:'logn',  label:'O(log n)',    color:'#6fa8dc', fn:n=>Math.log2(n),           on:true  },
+    { key:'n',     label:'O(n)',        color:'#9db8d1', fn:n=>n,                       on:true  },
+    { key:'nlogn', label:'O(n log n)',  color:'#c9a05a', fn:n=>n*Math.log2(Math.max(n,1)), on:true },
+    { key:'n2',    label:'O(n²)',  color:'#d98b5f', fn:n=>n*n,                     on:true  },
+    { key:'2n',    label:'O(2ⁿ)',  color:'#c97b7b', fn:n=>Math.pow(2,n),           on:false },
+    { key:'nfact', label:'O(n!)',       color:'#a887c9', fn:fact,                        on:false }
+  ];
+  const state = { log:true, maxN:20, hoverN:null };
+  const enabled = c => c.on;
+
+  const fmt = v => {
+    if(!isFinite(v)) return '∞';
+    if(v < 1000) return (Math.round(v*10)/10).toString().replace(/\.0$/,'');
+    if(v < 1e6)  return Math.round(v).toLocaleString('uk');
+    return v.toExponential(1).replace('e+','·10^');
+  };
+
+  host.innerHTML =
+    '<div class="cx-wrap">'+
+      '<div class="cx-top">'+
+        '<div class="cx-title">Як росте час зі збільшенням входу <i>n</i></div>'+
+        '<div class="cx-ctrl">'+
+          '<button class="cx-scale" data-act="scale"></button>'+
+          '<label class="cx-slider">n≤ <b class="cx-nval"></b>'+
+            '<input type="range" min="8" max="64" step="1" class="cx-range"></label>'+
+        '</div>'+
+      '</div>'+
+      '<div class="cx-legend"></div>'+
+      '<div class="cx-plot"></div>'+
+      '<div class="cx-readout">Наведи курсор на графік, щоб побачити значення. Клікай мітки, щоб вмикати й вимикати криві.</div>'+
+    '</div>';
+
+  const legendEl = host.querySelector('.cx-legend');
+  const plotEl   = host.querySelector('.cx-plot');
+  const readEl   = host.querySelector('.cx-readout');
+  const scaleBtn = host.querySelector('.cx-scale');
+  const range    = host.querySelector('.cx-range');
+  const nval      = host.querySelector('.cx-nval');
+
+  range.value = state.maxN;
+
+  function renderLegend(){
+    legendEl.innerHTML = CURVES.map((c,i)=>
+      '<button class="cx-chip'+(c.on?'':' off')+'" data-i="'+i+'">'+
+        '<span class="cx-dot" style="background:'+c.color+'"></span>'+esc(c.label)+'</button>').join('');
+  }
+
+  // геометрія: n — на горизонталі, кількість операцій (час) — на вертикалі
+  const W=680, H=360, L=62, R=78, T=16, B=40;
+  const PL=L, PR=W-R, PT=T, PB=H-B, PW=PR-PL, PH=PB-PT;
+  const mapX = n => PL + (state.maxN>1 ? (n-1)/(state.maxN-1) : 0)*PW;   // n росте вправо
+
+  function draw(){
+    scaleBtn.textContent = state.log ? 'шкала часу: логарифмічна' : 'шкала часу: лінійна';
+    nval.textContent = state.maxN;
+
+    const act = CURVES.filter(enabled);
+    let top = 1;
+    act.forEach(c=>{ const v=c.fn(state.maxN); if(isFinite(v)) top=Math.max(top,v); });
+    if(top<10) top=10;
+
+    const mapY = v => {                         // кількість операцій росте вгору
+      v = Math.max(v, state.log?1:0);
+      const t = state.log
+        ? Math.log10(Math.min(v,top))/Math.log10(top)
+        : Math.min(v,top)/top;
+      return PB - t*PH;
+    };
+
+    let g = '<svg viewBox="0 0 '+W+' '+H+'" class="cx-svg" preserveAspectRatio="xMidYMid meet">';
+    // осі
+    g += '<line x1="'+PL+'" y1="'+PT+'" x2="'+PL+'" y2="'+PB+'" class="cx-axis"/>';
+    g += '<line x1="'+PL+'" y1="'+PB+'" x2="'+PR+'" y2="'+PB+'" class="cx-axis"/>';
+
+    // горизонтальна сітка + підписи Y (кількість операцій / час)
+    if(state.log){
+      const dec = Math.ceil(Math.log10(top));
+      for(let k=0;k<=dec;k++){
+        const v=Math.pow(10,k); if(v>top*1.0001) break;
+        const y=mapY(v);
+        g += '<line x1="'+PL+'" y1="'+y+'" x2="'+PR+'" y2="'+y+'" class="cx-grid"/>';
+        g += '<text x="'+(PL-6)+'" y="'+(y+3)+'" class="cx-ylab">'+(k===0?'1':'10'+sup(k))+'</text>';
+      }
+    } else {
+      for(let k=0;k<=4;k++){
+        const y=PB-k/4*PH, v=top*k/4;
+        g += '<line x1="'+PL+'" y1="'+y+'" x2="'+PR+'" y2="'+y+'" class="cx-grid"/>';
+        g += '<text x="'+(PL-6)+'" y="'+(y+3)+'" class="cx-ylab">'+fmt(v)+'</text>';
+      }
+    }
+    g += '<text x="'+(PL-8)+'" y="'+(PT-4)+'" class="cx-ytitle">операцій (час)</text>';
+
+    // вертикальна сітка + підписи X (розмір входу n)
+    const xticks = [1, Math.round(state.maxN/4), Math.round(state.maxN/2), Math.round(state.maxN*3/4), state.maxN]
+      .filter((v,i,a)=>a.indexOf(v)===i);
+    xticks.forEach(n=>{ const x=mapX(n);
+      g += '<line x1="'+x+'" y1="'+PT+'" x2="'+x+'" y2="'+PB+'" class="cx-grid"/>';
+      g += '<text x="'+x+'" y="'+(PB+16)+'" class="cx-xlab">'+n+'</text>'; });
+    g += '<text x="'+((PL+PR)/2)+'" y="'+(H-3)+'" class="cx-axtitle">розмір входу n</text>';
+
+    // криві: точка (n_x, операції_y)
+    act.forEach(c=>{
+      let pts='';
+      for(let n=1;n<=state.maxN;n++){
+        const v=c.fn(n); if(!isFinite(v)) break;
+        pts += mapX(n)+','+mapY(v)+' ';
+      }
+      g += '<polyline points="'+pts.trim()+'" fill="none" stroke="'+c.color+'" stroke-width="2.2" class="cx-curve"/>';
+      // мітка кривої праворуч, на рівні її кінцевого значення (n = maxN)
+      const vend=c.fn(state.maxN);
+      if(isFinite(vend)){
+        const y=Math.max(PT+8,Math.min(PB-2,mapY(vend)));
+        g += '<text x="'+(PR+4)+'" y="'+(y+3)+'" class="cx-endlab" style="fill:'+c.color+'">'+esc(c.label)+'</text>';
+      }
+    });
+
+    // курсор (вертикальна лінія на рівні n)
+    if(state.hoverN!=null){
+      const x=mapX(state.hoverN);
+      g += '<line x1="'+x+'" y1="'+PT+'" x2="'+x+'" y2="'+PB+'" class="cx-cursor"/>';
+      act.forEach(c=>{ const v=c.fn(state.hoverN); if(isFinite(v)){ const y=mapY(v);
+        g += '<circle cx="'+x+'" cy="'+y+'" r="3.2" fill="'+c.color+'"/>'; } });
+    }
+    g += '</svg>';
+    plotEl.innerHTML = g;
+
+    const svg = plotEl.querySelector('svg');
+    svg.addEventListener('mousemove', ev=>{
+      const r=svg.getBoundingClientRect();
+      const px=(ev.clientX-r.left)/r.width*W;
+      let n=Math.round(1+(px-PL)/PW*(state.maxN-1));
+      n=Math.max(1,Math.min(state.maxN,n));
+      if(n===state.hoverN) return;          // без зайвих перемальовувань
+      state.hoverN=n; draw(); showReadout(n);
+    });
+    svg.addEventListener('mouseleave', ()=>{ state.hoverN=null; draw();
+      readEl.innerHTML='Наведи курсор на графік, щоб побачити значення. Клікай мітки, щоб вмикати й вимикати криві.'; });
+  }
+
+  function sup(k){ const m={0:'⁰',1:'¹',2:'²',3:'³',4:'⁴',5:'⁵',6:'⁶',7:'⁷',8:'⁸',9:'⁹'}; return String(k).split('').map(d=>m[d]).join(''); }
+
+  function showReadout(n){
+    readEl.innerHTML = '<b>n = '+n+'</b> → ' +
+      CURVES.filter(enabled).map(c=>'<span style="color:'+c.color+'">'+esc(c.label)+' ≈ '+fmt(c.fn(n))+'</span>').join(' · ');
+  }
+
+  legendEl.addEventListener('click', ev=>{
+    const chip=ev.target.closest('.cx-chip'); if(!chip) return;
+    CURVES[+chip.dataset.i].on = !CURVES[+chip.dataset.i].on;
+    renderLegend(); draw();
+  });
+  scaleBtn.addEventListener('click', ()=>{ state.log=!state.log; draw(); });
+  range.addEventListener('input', ()=>{ state.maxN=+range.value; if(state.hoverN>state.maxN) state.hoverN=null; draw(); });
+
+  renderLegend(); draw();
+};
+
+function toggleDone(id){ CourseStore.toggleDone(id); refreshUI(); openLesson(id, false); }
+/* позначити пройденим і одразу перейти до наступного (або лишитись, якщо останній) */
+function markDoneNext(id, nextId){
+  if(!CourseStore.isDone(id)) CourseStore.setDone(id, true);
+  refreshUI();
+  if(nextId) openLesson(nextId); else openLesson(id, false);
+}
+function toggleProj(name, btn){
+  const v = CourseStore.toggleProj(name);
+  btn.innerHTML = v? '✓ зроблено' : 'позначити';
+}
+
+/* ================= проєкти ================= */
+function projectRoot(){
+  try{
+    let p = decodeURIComponent(location.pathname);
+    p = p.replace(/\/[^\/]*$/,'');
+    return p.replace(/^\//,'').replace(/\//g,'\\') + '\\projects\\';
+  }catch(e){ return ''; }
+}
+function copyText(text){
+  const done = ()=>alert('Скопійовано:\n'+text);
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done, ()=>fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+function copyProjPath(name){
+  const full = projectRoot() + name;
+  const done = ()=>alert('Скопійовано:\n'+full);
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(full).then(done, ()=>fallbackCopy(full, done));
+  else fallbackCopy(full, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  ta.remove(); done();
+}
+
+/* ================= тести ================= */
+let quiz = null;
+function startQuiz(id){
+  const qs = quizBank(id);
+  if(!qs.length) return;
+  quiz = { id:id, qs:qs, idx:0, correct:0, answered:false };
+  renderQuiz(); window.scrollTo({top:0});
+}
+function renderQuiz(){
+  const les = flat.find(l=>l.id===quiz.id);
+  const q = quiz.qs[quiz.idx];
+  let html = '<div class="crumbs">Тест &middot; '+esc(les.num+' '+les.title)+
+             ' &middot; рівень '+LVNAME[CourseStore.getLevel()]+'</div>';
+  if(!q){
+    CourseStore.recordQuiz(quiz.id, quiz.correct, quiz.qs.length);
+    const pct = Math.round(quiz.correct/quiz.qs.length*100);
+    html += '<div class="quiz-card"><div class="quiz-score">Результат: '+quiz.correct+' з '+quiz.qs.length+' ('+pct+'%)</div>'+
+      '<p>'+(pct>=80? 'Чудово, тему засвоєно.' : pct>=50? 'Непогано, але перечитай слабкі місця.' : 'Варто перечитати урок і повторити тест.')+'</p>'+
+      '<button class="btn" onclick="startQuiz(\''+quiz.id+'\')">&#8635; Ще раз</button> '+
+      '<button class="btn" onclick="refreshUI();openLesson(\''+quiz.id+'\')">&larr; До уроку</button></div>';
+    $('#main').innerHTML = html; return;
+  }
+  html += '<div class="quiz-card"><div class="qnum">Питання '+(quiz.idx+1)+' з '+quiz.qs.length+
+          ' &middot; правильних: '+quiz.correct+
+          (q.lvl && q.lvl!=='junior'? ' <span class="lvtag '+q.lvl+'">'+LVNAME[q.lvl]+'</span>':'')+
+          '</div><div class="qtext">'+esc(q.q)+'</div>'+
+    (q.code? '<pre><code>'+esc(q.code)+'</code></pre>':'')+
+    q.options.map((o,i)=>'<button class="quiz-opt" data-i="'+i+'" onclick="answerQuiz('+i+')">'+esc(o)+'</button>').join('')+
+    '<div id="quiz-after"></div></div>'+
+    '<button class="btn" onclick="openLesson(\''+quiz.id+'\')">&times; Перервати</button>';
+  $('#main').innerHTML = html;
+  document.querySelectorAll('#main pre code').forEach(c=>{ c.innerHTML = hl(c.textContent); });
+}
+function answerQuiz(i){
+  if(quiz.answered) return;
+  quiz.answered = true;
+  const q = quiz.qs[quiz.idx];
+  const ok = i === q.correct;
+  if(ok) quiz.correct++;
+  document.querySelectorAll('.quiz-opt').forEach(b=>{
+    b.disabled = true;
+    const bi = +b.dataset.i;
+    if(bi === q.correct) b.classList.add('correct');
+    else if(bi === i) b.classList.add('wrong');
+  });
+  document.getElementById('quiz-after').innerHTML =
+    '<div class="quiz-explain">'+(ok? '✔ Правильно. ':'✘ Неправильно. ')+esc(q.explain||'')+'</div>'+
+    '<button class="btn" style="margin-top:10px" onclick="nextQuiz()">'+
+    (quiz.idx+1 < quiz.qs.length ? 'Далі →' : 'Підсумок')+'</button>';
+}
+function nextQuiz(){ quiz.idx++; quiz.answered=false; renderQuiz(); }
+
+/* ================= пошук ================= */
+const stripMD = m => m.replace(/```[\s\S]*?```/g,' ').replace(/[:#*`>\-]/g,' ').replace(/\s+/g,' ');
+function initSearch(){
+  $('#search').addEventListener('input', e=>{
+    const q = e.target.value.trim().toLowerCase();
+    const out = $('#search-results'); out.innerHTML='';
+    if(q.length<3) return;
+    visReady().forEach(les=>{
+      const raw = les.title+' '+stripMD(les.md);
+      const pos = raw.toLowerCase().indexOf(q);
+      if(pos<0) return;
+      const qre = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');
+      const snippet = esc(raw.substr(Math.max(0,pos-40), 110)).replace(qre,'<mark>$1</mark>');
+      const d = document.createElement('div'); d.className='sr';
+      d.innerHTML='<div class="t">'+esc(les.num+' '+les.title)+'</div><div class="snip">…'+snippet+'…</div>';
+      d.onclick=()=>openLesson(les.id);
+      out.appendChild(d);
+    });
+    if(!out.children.length) out.innerHTML='<div class="sr" style="cursor:default"><div class="snip">нічого не знайдено</div></div>';
+  });
+}
+
+/* ================= шрифт і хедер ================= */
+function applyFont(){
+  const sz = (CourseStore.state.settings && CourseStore.state.settings.fontSize) || 17;
+  const m = document.getElementById('main'); if(m) m.style.fontSize = sz+'px';
+}
+function bumpFont(d){
+  const s = CourseStore.state.settings || (CourseStore.state.settings = {});
+  s.fontSize = Math.min(24, Math.max(13, (s.fontSize||17)+d));
+  CourseStore.save(); applyFont();
+}
+const headZone = document.createElement('div');
+headZone.id = 'head-zone';
+document.body.appendChild(headZone);
+let headHover = false;
+function updateHead(){
+  const sh = document.getElementById('sec-head');
+  if(!sh) return;
+  sh.classList.toggle('hidden', !(window.scrollY <= 20 || headHover));
+}
+headZone.addEventListener('mouseenter', ()=>{ headHover = true; updateHead(); });
+document.addEventListener('mousemove', e=>{
+  if(e.clientY > 90 && headHover){ headHover = false; updateHead(); }
+});
+window.addEventListener('scroll', updateHead);
+
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName === 'INPUT') return;
+  if(e.key === '/'){ e.preventDefault(); $('#search').focus(); }
+  const seq = visLessons();
+  const i = seq.findIndex(l=>l.id===CourseStore.getLastLesson());
+  if(e.altKey && e.key === 'ArrowRight' && i>=0 && i<seq.length-1) openLesson(seq[i+1].id);
+  if(e.altKey && e.key === 'ArrowLeft'  && i>0) openLesson(seq[i-1].id);
+});
+
+/* ================= глосарій скорочень ================= */
+const GLOSS = window.COURSE_GLOSSARY || {};
+let glossRe = null;
+(function buildGlossRe(){
+  const keys = Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+  if(!keys.length) return;
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  // Дефіс НЕ є межею слова для терміна: так «ABI-сумісність», «CRTP-ідіома»,
+  // «RTTI-дані» отримують підказку на скороченні перед дефісом. Складені терміни
+  // (IEEE-754) все одно матчаться цілком, бо довші ключі перебираються першими.
+  glossRe = new RegExp('(^|[^\\wА-Яа-яЇїІіЄєҐґ])(' + keys.map(esc).join('|') +
+                       ')(?![\\wА-Яа-яЇїІіЄєҐґ])', 'g');
+})();
+
+function applyGlossary(root){
+  if(!glossRe || !root) return;
+  const skip = new Set(['CODE','PRE','A','ABBR','SCRIPT','STYLE','TEXTAREA','BUTTON']);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(n){
+      for(let p = n.parentNode; p && p !== root; p = p.parentNode)
+        if(skip.has(p.nodeName)) return NodeFilter.FILTER_REJECT;
+      glossRe.lastIndex = 0;   // глобальний регекс: .test() зсуває lastIndex, скидаємо щоразу
+      return glossRe.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const targets = [];
+  let n; while((n = walker.nextNode())) targets.push(n);
+
+  targets.forEach(node=>{
+    glossRe.lastIndex = 0;
+    const html = esc(node.nodeValue).replace(glossRe, (m, pre, term)=>
+      pre + '<abbr class="gl" data-term="' + esc(term) + '">' + esc(term) + '</abbr>');
+    const span = document.createElement('span');
+    span.innerHTML = html;
+    node.parentNode.replaceChild(span, node);
+  });
+}
+
+const gtip = () => document.getElementById('gtip');
+document.addEventListener('mouseover', e=>{
+  const a = e.target.closest && e.target.closest('abbr.gl');
+  if(!a) return;
+  const g = GLOSS[a.dataset.term];
+  if(!g) return;
+  const t = gtip();
+  t.innerHTML = '<div class="gt-term">' + esc(a.dataset.term) + '</div>' +
+                (g.full? '<div class="gt-full">' + esc(g.full) + '</div>' : '') +
+                '<div>' + esc(g.desc || '') + '</div>';
+  t.style.display = 'block';
+  const r = a.getBoundingClientRect();
+  const w = t.offsetWidth, h = t.offsetHeight;
+  let x = r.left, y = r.bottom + 8;
+  if(x + w > window.innerWidth - 12) x = window.innerWidth - w - 12;
+  if(y + h > window.innerHeight - 12) y = r.top - h - 8;
+  t.style.left = Math.max(8, x) + 'px';
+  t.style.top  = Math.max(8, y) + 'px';
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest && e.target.closest('abbr.gl')) gtip().style.display = 'none';
+});
+
+/* ================= замітки для редагування ================= */
+let pendingSel = null;
+
+document.addEventListener('contextmenu', e=>{
+  const inContent = e.target.closest && e.target.closest('#main .content');
+  const sel = window.getSelection();
+  const text = sel ? String(sel).trim() : '';
+  if(!inContent || !text){ hideCtxMenu(); return; }
+  e.preventDefault();
+  pendingSel = { text: text, lessonId: CourseStore.getLastLesson() };
+  const m = document.getElementById('ctxmenu');
+  m.style.display = 'block';
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.min(e.clientX, window.innerWidth  - w - 10) + 'px';
+  m.style.top  = Math.min(e.clientY, window.innerHeight - h - 10) + 'px';
+});
+function hideCtxMenu(){ document.getElementById('ctxmenu').style.display = 'none'; }
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest || !e.target.closest('#ctxmenu')) hideCtxMenu();
+});
+
+function openEditDialog(){
+  hideCtxMenu();
+  if(!pendingSel) return;
+  const les = flat.find(l => l.id === pendingSel.lessonId);
+  document.getElementById('ed-where').textContent =
+    les ? ('Модуль ' + les._mod.num + '. ' + les._mod.title + ' · урок ' + les.num + ' ' + les.title) : '';
+  document.getElementById('ed-quote').textContent = pendingSel.text;
+  document.getElementById('ed-text').value = '';
+  document.getElementById('editdlg').style.display = 'flex';
+  setTimeout(()=>document.getElementById('ed-text').focus(), 30);
+}
+function closeEditDialog(){ document.getElementById('editdlg').style.display = 'none'; }
+
+function saveEditNote(){
+  const txt = document.getElementById('ed-text').value.trim();
+  if(!txt || !pendingSel){ closeEditDialog(); return; }
+  const les = flat.find(l => l.id === pendingSel.lessonId);
+  CourseStore.addEdit({
+    lessonId: pendingSel.lessonId,
+    lessonNum: les ? les.num : '',
+    lessonTitle: les ? les.title : '',
+    moduleNum: les ? les._mod.num : '',
+    moduleTitle: les ? les._mod.title : '',
+    quote: pendingSel.text,
+    note: txt
+  });
+  closeEditDialog();
+  renderNoteBar();
+  if(!document.getElementById('notebar').classList.contains('open')) toggleNoteBar();
+}
+
+function toggleNoteBar(){ document.getElementById('notebar').classList.toggle('open'); }
+
+function renderNoteBar(){
+  const id = CourseStore.getLastLesson();
+  const list = id ? CourseStore.editNotesFor(id) : [];
+  document.getElementById('nb-count').textContent = list.length;
+  document.getElementById('nb-body').innerHTML = list.length
+    ? list.map(n =>
+        '<div class="nitem' + (n.status === 'done' ? ' done' : '') + '">' +
+        '<div class="nq">«' + esc(n.quote) + '»</div>' +
+        '<div class="nn">' + esc(n.note) + '</div>' +
+        '<div class="nmeta"><span>' + esc((n.date||'').slice(0,10)) + '</span>' +
+        '<button class="btn tiny" onclick="toggleEditStatus(\'' + n.id + '\')">' +
+          (n.status === 'done' ? '↺' : '✓') + '</button>' +
+        '<button class="btn tiny" onclick="editEditNote(\'' + n.id + '\')">✎</button>' +
+        '<button class="btn tiny" onclick="removeEditNote(\'' + n.id + '\')">🗑</button>' +
+        '</div></div>').join('')
+    : '<div style="color:var(--text-dim);font-size:13.5px">Для цього уроку заміток немає.<br><br>' +
+      'Виділи текст, натисни праву кнопку миші й обери <b>Edit Selected Text</b>.</div>';
+  highlightEdited();
+}
+
+function toggleEditStatus(id){
+  const n = CourseStore.editNotes().find(x => x.id === id);
+  CourseStore.updateEdit(id, { status: n && n.status === 'done' ? 'open' : 'done' });
+  renderNoteBar();
+}
+function removeEditNote(id){
+  if(confirm('Видалити замітку?')){ CourseStore.delEdit(id); renderNoteBar(); }
+}
+function editEditNote(id){
+  const n = CourseStore.editNotes().find(x => x.id === id);
+  if(!n) return;
+  const t = prompt('Пропозиція щодо редагування:', n.note);
+  if(t !== null){ CourseStore.updateEdit(id, { note: t.trim() }); renderNoteBar(); }
+}
+
+/* підсвітити в тексті фрагменти, до яких є замітки */
+function highlightEdited(){
+  const root = document.querySelector('#main .content');
+  if(!root) return;
+  root.querySelectorAll('mark.editsel').forEach(m=>{
+    m.replaceWith(document.createTextNode(m.textContent));
+  });
+  const id = CourseStore.getLastLesson();
+  const quotes = (id ? CourseStore.editNotesFor(id) : [])
+    .map(n => n.quote).filter(q => q && q.length > 3 && q.length < 400);
+  if(!quotes.length) return;
+
+  const inWidget = n => { for(let p=n.parentNode; p && p!==root; p=p.parentNode)
+    if(p.classList && p.classList.contains('mdwidget')) return true; return false; };
+  quotes.forEach(q=>{
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while((node = walker.nextNode())){
+      if(inWidget(node)) continue;
+      const i = node.nodeValue.indexOf(q);
+      if(i < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, i);
+      range.setEnd(node, i + q.length);
+      const mk = document.createElement('mark');
+      mk.className = 'editsel';
+      try { range.surroundContents(mk); } catch(e) {}
+      break;
+    }
+  });
+}
+
+/* ---- експорт у edit-notes.md ---- */
+function editNotesMarkdown(){
+  const all = CourseStore.editNotes();
+  const byLesson = {};
+  all.forEach(n => (byLesson[n.lessonId] = byLesson[n.lessonId] || []).push(n));
+
+  let out = '# Замітки для редагування\n\n' +
+    'Згенеровано ' + new Date().toISOString().slice(0,16).replace('T',' ') +
+    ' · записів: ' + all.length + '\n\n' +
+    'Заміни цим файлом `edit-notes.md` у корені проєкту й запусти `rebuild.bat`.\n\n---\n\n';
+
+  Object.keys(byLesson).forEach(lid=>{
+    const first = byLesson[lid][0];
+    out += '## ' + lid + ' | ' + first.lessonNum + ' ' + first.lessonTitle +
+           ' | Модуль ' + first.moduleNum + '. ' + first.moduleTitle + '\n\n';
+    byLesson[lid].forEach(n=>{
+      out += '- id: ' + n.id + '\n' +
+             '  date: ' + n.date + '\n' +
+             '  status: ' + (n.status || 'open') + '\n' +
+             '  quote: ' + String(n.quote).replace(/\r?\n/g, ' ') + '\n' +
+             '  note: ' + String(n.note).replace(/\r?\n/g, ' ') + '\n\n';
+    });
+  });
+  return out;
+}
+function exportEditNotes(){
+  const blob = new Blob([editNotesMarkdown()], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'edit-notes.md';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ---------- світла/темна тема ---------- */
+function themeLabel(){
+  return document.documentElement.classList.contains('light')
+    ? '🌙 Темна тема' : '☀ Світла тема';
+}
+function headerToolsHTML(){
+  return '<button class="btn tiny" onclick="openNotesPage()" title="усі замітки окремою сторінкою">🗒 Замітки</button>'+
+         '<button class="btn tiny themebtn" onclick="toggleTheme()" title="перемкнути тему">'+themeLabel()+'</button>';
+}
+function updateThemeBtn(){
+  document.querySelectorAll('.themebtn').forEach(b => b.textContent = themeLabel());
+}
+function toggleTheme(){
+  const light = !document.documentElement.classList.contains('light');
+  document.documentElement.classList.toggle('light', light);
+  try{ localStorage.setItem('cppCourseTheme', light ? 'light' : 'dark'); }catch(e){}
+  updateThemeBtn();
+}
+
+let notesWin = null;
+function openNotesPage(){
+  if(notesWin && !notesWin.closed){ notesWin.focus(); return; }
+  notesWin = window.open('notes.html', 'courseEditNotes',
+                         'width=1100,height=850,resizable=yes,scrollbars=yes');
+}
+/* виклик зі сторінки заміток: перейти на урок і показати фрагмент */
+function gotoEditNote(lessonId){
+  openLesson(lessonId);
+  setTimeout(()=>{
+    const m = document.querySelector('#main .content mark.editsel');
+    if(m) m.scrollIntoView({block:'center'});
+    if(!document.getElementById('notebar').classList.contains('open')) toggleNoteBar();
+  }, 120);
+  window.focus();
+}
+
+/* deep-link зі сторінки заміток: index.html#goto=<lessonId> */
+function consumeGotoHash(){
+  const m = location.hash.match(/^#goto=(.+)$/);
+  if(!m) return false;
+  const id = decodeURIComponent(m[1]);
+  history.replaceState(null, '', location.pathname + location.search);
+  if(!flat.find(l => l.id === id)) return false;
+  gotoEditNote(id);
+  return true;
+}
+window.addEventListener('hashchange', consumeGotoHash);
+
+/* сигнал зі сторінки заміток через localStorage (працює на file://,
+   де прямі виклики між вікнами заборонені) */
+window.addEventListener('storage', e => {
+  if(e.key !== 'cppCourseGotoLesson' || !e.newValue) return;
+  try {
+    const d = JSON.parse(e.newValue);
+    if(d && d.id && flat.find(l => l.id === d.id)) gotoEditNote(d.id);
+  } catch(err) {}
+});
+
+/* ================= старт ================= */
+function boot(){
+  $('#course-title').textContent = COURSE.title;
+  $('#course-sub').textContent = COURSE.subtitle || '';
+  if(window.COURSE_EDIT_NOTES) CourseStore.mergeEdits(window.COURSE_EDIT_NOTES);
+  renderLvSwitch();
+  refreshUI();
+  applyFont();
+  updateThemeBtn();
+  if(consumeGotoHash()) return;
+  const last = CourseStore.getLastLesson();
+  if(last && flat.find(l=>l.id===last && CourseStore.visible(l.level))) openLesson(last);
+  else openHome();
+}
+initSearch();
+
+/* ================= онлайн-режим: ключ, сесія, heartbeat ================= */
+function showKeyGate(msg){
+  if(hbTimer){ clearInterval(hbTimer); hbTimer = null; }
+  $('#layout').style.display = 'none';
+  $('#lvgate').style.display = 'none';
+  $('#keygate').style.display = 'flex';
+  $('#kg-err').textContent = msg || '';
+  const k = $('#kg-key'); if(k) k.onkeydown = e => { if(e.key==='Enter') doActivate(); };
+  const em = $('#kg-email'); if(em) em.onkeydown = e => { if(e.key==='Enter') doActivate(); };
+}
+const KG_ERR = {
+  invalid_key:'Невірний ключ.', key_revoked:'Ключ анульовано.',
+  key_expired:'Термін дії ключа вичерпано.', email_mismatch:'Пошта не збігається з ключем.',
+  bound_to_other_device:'Ключ уже прив’язаний до іншого пристрою.',
+  active_elsewhere:'Ключ уже використовується на іншому пристрої.',
+  missing_fields:'Заповніть пошту й ключ.'
+};
+async function doActivate(){
+  const email = ($('#kg-email').value||'').trim();
+  const key   = ($('#kg-key').value||'').trim();
+  const btn = $('#kg-btn');
+  if(!email || !key){ $('#kg-err').textContent = 'Заповніть пошту й ключ.'; return; }
+  btn.disabled = true; $('#kg-err').textContent = 'Перевірка…';
+  try{
+    const r = await CourseAPI.activate(key, email);
+    CourseStore.setLevel(r.level);           // рівень диктує ключ
+    $('#keygate').style.display = 'none';
+    $('#layout').style.display = 'flex';
+    startHeartbeat();
+    boot();
+  }catch(e){
+    $('#kg-err').textContent = KG_ERR[e.status===0?'':e.message] || ('Помилка: '+(e.message||'невідома'));
+  }finally{ btn.disabled = false; }
+}
+function startHeartbeat(){
+  if(hbTimer) clearInterval(hbTimer);
+  hbTimer = setInterval(async ()=>{
+    try{ await CourseAPI.heartbeat(); }
+    catch(e){ if(e.status===401) onSessionLost(); }
+  }, 60000);
+}
+function onSessionLost(){
+  CourseAPI.setToken(null);
+  showKeyGate('Сесію завершено (ключ анульовано або вхід з іншого пристрою). Увійдіть знову.');
+}
+async function releaseDevice(){
+  if(!confirm('Відв’язати ключ від цього пристрою?\nПісля цього тут доступ зникне, і ключем можна буде увійти на іншому пристрої. Кількість перенесень обмежена.'))
+    return;
+  try{
+    const r = await CourseAPI.release();
+    CourseAPI.setToken(null);
+    const left = (r && r.resets_left);
+    showKeyGate('Пристрій звільнено'+(left>=0? ' (залишилось перенесень: '+left+')':'')+'. Тепер ключем можна увійти на іншому пристрої.');
+  }catch(e){
+    if(e.status===403 && e.data && e.data.error==='device_reset_limit')
+      alert('Ліміт перенесень пристрою вичерпано ('+e.data.used+'/'+e.data.limit+'). Зверніться до підтримки.');
+    else if(e.status===401) onSessionLost();
+    else alert('Не вдалося звільнити пристрій: '+(e.message||'помилка'));
+  }
+}
+
+/* ================= запуск ================= */
+if(ONLINE){
+  // онлайн: завжди починаємо з екрана ключа (токен живе лише в пам’яті)
+  showKeyGate('');
+}else if(CourseStore.getLevel()){
+  $('#layout').style.display='flex'; boot();
+}else{
+  renderGate();
+}
+</script>
+</body>
+</html>

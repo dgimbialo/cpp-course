@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Замітки для редагування — курс C++</title>
+<style>
+  :root{
+    --bg:#1a1d27; --bg2:#22262f; --bg3:#2a2f39; --border:#3a3f4d;
+    --text:#c4c8d1; --text-dim:#8b90a0; --head:#e4e7ee;
+    --accent:#22c6f0; --accent2:#6fdcf2; --note:#ff9e57; --done:#39d98a;
+    --neon:#00ccff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{color:var(--text); font-family:Georgia,'Times New Roman',serif;
+       font-size:16px; line-height:1.6; padding:22px 26px; min-height:100vh;
+       background:
+         radial-gradient(1100px 560px at 82% -8%, rgba(0,204,255,.07), transparent 60%),
+         radial-gradient(820px 480px at -8% 16%, rgba(204,68,255,.06), transparent 55%),
+         var(--bg);
+       background-attachment:fixed;}
+  h1{color:var(--head); font-size:23px; font-weight:normal; margin-bottom:4px;
+     text-shadow:0 0 22px rgba(0,204,255,.28);}
+  .sub{color:var(--text-dim); font-size:13.5px; margin-bottom:18px;}
+  .bar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; align-items:center;}
+  .btn{background:var(--bg3); border:1px solid var(--border); color:var(--accent2);
+       padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13.5px; font-family:inherit;
+       transition:border-color .15s, color .15s, box-shadow .15s;}
+  .btn:hover{border-color:var(--neon); color:#aef0ff; box-shadow:0 0 0 1px rgba(0,204,255,.3);}
+  .btn.on{border-color:var(--neon); color:var(--head); box-shadow:0 0 14px rgba(0,204,255,.25);}
+  input[type=search]{background:var(--bg3); border:1px solid var(--border); color:var(--text);
+                     border-radius:6px; padding:6px 10px; font-size:13.5px; outline:none; min-width:240px;}
+  .lesson{margin-bottom:22px;}
+  .lesson h2{color:var(--head); font-size:16px; font-weight:normal; padding:7px 10px;
+             background:var(--bg2); border-radius:7px; margin-bottom:10px; cursor:pointer;
+             display:flex; align-items:center; gap:10px; border-left:3px solid var(--neon);}
+  .lesson h2:hover{color:var(--accent2); box-shadow:0 0 16px rgba(0,204,255,.12);}
+  .lesson h2 .mod{color:var(--text-dim); font-size:12.5px;}
+  .lesson h2 .go{margin-left:auto; font-size:12px; color:var(--accent2);}
+  .item{background:var(--bg2); border:1px solid var(--border); border-left:3px solid var(--note);
+        border-radius:0 9px 9px 0; padding:12px 15px; margin-bottom:10px;}
+  .item.done{border-left-color:var(--done); opacity:.7;}
+  .item .q{color:var(--note); font-style:italic; margin-bottom:8px;}
+  .item .n{margin-bottom:9px; white-space:pre-wrap;}
+  .item .n[contenteditable=true]{background:var(--bg3); border:1px solid var(--accent);
+                                 border-radius:6px; padding:7px 10px; outline:none;}
+  .meta{display:flex; gap:8px; align-items:center; color:var(--text-dim); font-size:12px;}
+  .empty{color:var(--text-dim); font-style:italic; padding:26px 0;}
+  ::-webkit-scrollbar{width:10px;} ::-webkit-scrollbar-thumb{background:var(--bg3); border-radius:5px;}
+</style>
+</head>
+<body>
+<h1>Замітки для редагування</h1>
+<div class="sub" id="sub"></div>
+
+<div class="bar">
+  <button class="btn on" id="f-all"  onclick="setFilter('all')">Усі</button>
+  <button class="btn"     id="f-open" onclick="setFilter('open')">Відкриті</button>
+  <button class="btn"     id="f-done" onclick="setFilter('done')">Опрацьовані</button>
+  <input type="search" id="q" placeholder="пошук по тексту…" oninput="render()">
+  <span style="flex:1"></span>
+  <button class="btn" id="btn-delsel" onclick="delSelected()">🗑 Видалити виділені (0)</button>
+  <button class="btn" onclick="clearSel()">✖ Зняти виділення</button>
+  <button class="btn" onclick="delAll()">🗑 Видалити всі</button>
+  <button class="btn" onclick="exportMd()">💾 Зберегти у edit-notes.md</button>
+</div>
+
+<div id="list"></div>
+
+<script>
+document.write('<script src="store.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="curriculum.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="editnotes.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script>
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+let filter = 'all';
+let selected = new Set();
+
+if (window.COURSE_EDIT_NOTES) CourseStore.mergeEdits(window.COURSE_EDIT_NOTES);
+
+function setFilter(f){
+  filter = f;
+  ['all','open','done'].forEach(k=>
+    document.getElementById('f-'+k).classList.toggle('on', k===f));
+  render();
+}
+
+function render(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  let all = CourseStore.editNotes();
+  if(filter !== 'all') all = all.filter(n => (n.status||'open') === filter);
+  if(q) all = all.filter(n =>
+    (n.quote||'').toLowerCase().includes(q) || (n.note||'').toLowerCase().includes(q));
+
+  const open = CourseStore.editNotes().filter(n => (n.status||'open')==='open').length;
+  document.getElementById('sub').textContent =
+    'Усього ' + CourseStore.editNotes().length + ' · відкритих ' + open +
+    ' · клік на заголовку уроку відкриває його в курсі';
+
+  const byLesson = {};
+  all.forEach(n => (byLesson[n.lessonId] = byLesson[n.lessonId] || []).push(n));
+
+  const keys = Object.keys(byLesson);
+  document.getElementById('list').innerHTML = keys.length ? keys.map(lid=>{
+    const first = byLesson[lid][0];
+    return '<div class="lesson"><h2 onclick="goto(\'' + lid + '\')">' +
+      '<span>' + esc(first.lessonNum + ' ' + first.lessonTitle) + '</span>' +
+      '<span class="mod">Модуль ' + esc(first.moduleNum + '. ' + first.moduleTitle) + '</span>' +
+      '<span class="go">відкрити в курсі ↗</span></h2>' +
+      byLesson[lid].map(n =>
+        '<div class="item' + ((n.status||'open')==='done' ? ' done' : '') + '">' +
+        '<div class="q">«' + esc(n.quote) + '»</div>' +
+        '<div class="n" id="n-' + n.id + '">' + esc(n.note) + '</div>' +
+        '<div class="meta">' +
+        '<label style="display:flex;align-items:center;gap:5px;cursor:pointer">' +
+          '<input type="checkbox" onchange="toggleSel(\'' + n.id + '\', this.checked)"' +
+          (selected.has(n.id) ? ' checked' : '') + '> вибрати</label>' +
+        '<span>' + esc((n.date||'').slice(0,10)) + '</span>' +
+        '<button class="btn" onclick="toggleStatus(\'' + n.id + '\')">' +
+          ((n.status||'open')==='done' ? '↺ повернути' : '✓ опрацьовано') + '</button>' +
+        '<button class="btn" onclick="startEdit(\'' + n.id + '\')">✎ редагувати</button>' +
+        '<button class="btn" onclick="del(\'' + n.id + '\')">🗑</button>' +
+        '</div></div>').join('') +
+      '</div>';
+  }).join('') : '<div class="empty">Заміток немає. Виділи текст у курсі, натисни праву кнопку миші й обери «Edit Selected Text».</div>';
+
+  // прибрати з виділення замітки, яких уже немає, і оновити лічильник
+  const ids = new Set(CourseStore.editNotes().map(n => n.id));
+  selected = new Set([...selected].filter(id => ids.has(id)));
+  updateSelUI();
+}
+
+function toggleStatus(id){
+  const n = CourseStore.editNotes().find(x=>x.id===id);
+  CourseStore.updateEdit(id, { status: (n && n.status==='done') ? 'open' : 'done' });
+  render(); notifyCourse();
+}
+function del(id){
+  if(confirm('Видалити замітку?')){ selected.delete(id); CourseStore.delEdit(id); render(); notifyCourse(); }
+}
+
+function toggleSel(id, on){
+  if(on) selected.add(id); else selected.delete(id);
+  updateSelUI();
+}
+function updateSelUI(){
+  const btn = document.getElementById('btn-delsel');
+  btn.textContent = '🗑 Видалити виділені (' + selected.size + ')';
+  btn.classList.toggle('on', selected.size > 0);
+}
+function clearSel(){
+  selected.clear();
+  render();
+}
+function delSelected(){
+  if(!selected.size){ alert('Спершу познач замітки чекбоксами.'); return; }
+  if(!confirm('Видалити ' + selected.size + ' виділених заміток? Дію не можна скасувати.')) return;
+  selected.forEach(id => CourseStore.delEdit(id));
+  selected.clear();
+  render(); notifyCourse();
+}
+function delAll(){
+  const all = CourseStore.editNotes();
+  if(!all.length){ alert('Заміток немає.'); return; }
+  if(!confirm('Видалити ВСІ ' + all.length + ' заміток? Дію не можна скасувати.')) return;
+  all.forEach(n => CourseStore.delEdit(n.id));
+  selected.clear();
+  render(); notifyCourse();
+}
+function startEdit(id){
+  const el = document.getElementById('n-' + id);
+  if(!el) return;
+  el.contentEditable = 'true';
+  el.focus();
+  const finish = ()=>{
+    el.contentEditable = 'false';
+    CourseStore.updateEdit(id, { note: el.textContent.trim() });
+    el.removeEventListener('blur', finish);
+    render(); notifyCourse();
+  };
+  el.addEventListener('blur', finish);
+}
+
+function goto(lessonId){
+  // Сигнал через localStorage: якщо курс уже відкрито в іншому вікні,
+  // він упіймає storage-подію і перейде на урок (працює навіть на file://,
+  // де прямий виклик window.opener.* заборонений браузером).
+  try {
+    localStorage.setItem('cppCourseGotoLesson',
+      JSON.stringify({ id: lessonId, t: Date.now() }));
+  } catch(e) {}
+
+  // 1) якщо вікно-батько живе - пробуємо прямий виклик (спрацює по http),
+  //    а фокус дозволений навіть між ізольованими file:// вікнами
+  try {
+    if(window.opener && !window.opener.closed){
+      try { if(window.opener.gotoEditNote) window.opener.gotoEditNote(lessonId); } catch(e) {}
+      window.opener.focus();
+      return;   // курс відкритий: далі спрацює storage-подія
+    }
+  } catch(e) {}
+
+  // 2) курс не відкритий - відкриваємо з deep-link у hash
+  const w = window.open('index.html#goto=' + encodeURIComponent(lessonId), 'cppCourse');
+  try { if(w) w.focus(); } catch(e) {}
+}
+function notifyCourse(){
+  try {
+    if(window.opener && !window.opener.closed && window.opener.renderNoteBar)
+      window.opener.renderNoteBar();
+  } catch(e) { /* file:// ізоляція вікон - курс оновиться сам при відкритті */ }
+}
+
+function exportMd(){
+  const all = CourseStore.editNotes();
+  const byLesson = {};
+  all.forEach(n => (byLesson[n.lessonId] = byLesson[n.lessonId] || []).push(n));
+  let out = '# Замітки для редагування\n\n' +
+    'Згенеровано ' + new Date().toISOString().slice(0,16).replace('T',' ') +
+    ' · записів: ' + all.length + '\n\n' +
+    'Заміни цим файлом `edit-notes.md` у корені проєкту й запусти `rebuild.bat`.\n\n---\n\n';
+  Object.keys(byLesson).forEach(lid=>{
+    const f = byLesson[lid][0];
+    out += '## ' + lid + ' | ' + f.lessonNum + ' ' + f.lessonTitle +
+           ' | Модуль ' + f.moduleNum + '. ' + f.moduleTitle + '\n\n';
+    byLesson[lid].forEach(n=>{
+      out += '- id: ' + n.id + '\n  date: ' + n.date +
+             '\n  status: ' + (n.status||'open') +
+             '\n  quote: ' + String(n.quote).replace(/\r?\n/g,' ') +
+             '\n  note: '  + String(n.note).replace(/\r?\n/g,' ') + '\n\n';
+    });
+  });
+  const blob = new Blob([out], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'edit-notes.md';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+render();
+</script>
+</body>
+</html>
