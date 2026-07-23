@@ -62,7 +62,7 @@
   #lvgate .hint{color:var(--todo); font-size:13px; margin-top:20px;}
 
   #layout{display:flex; min-height:100vh;}
-  #sidebar{width:460px; min-width:460px; background:var(--bg2); border-right:1px solid var(--border);
+  #sidebar{width:490px; min-width:490px; background:var(--bg2); border-right:1px solid var(--border);
            height:100vh; overflow-y:auto; position:sticky; top:0; padding:14px;}
   #sidebar h1{font-size:16px; color:var(--head); line-height:1.35; margin-bottom:2px;}
   #sidebar .authors{font-size:12.5px; color:var(--text-dim); margin-bottom:10px;}
@@ -153,11 +153,11 @@
               background:currentColor; border:none; vertical-align:1px;}
 
   #main{flex:1; max-width:960px; padding:76px 48px 120px; margin:0 auto;}
-  #sec-head{position:fixed; top:0; left:360px; right:0; z-index:20; background:var(--bg2);
+  #sec-head{position:fixed; top:0; left:490px; right:0; z-index:20; background:var(--bg2);
             border-bottom:1px solid var(--border); padding:6px 18px;
             transform:translateY(0); transition:transform .18s ease;}
   #sec-head.hidden{transform:translateY(-105%);}
-  #head-zone{position:fixed; top:0; left:360px; right:0; height:14px; z-index:19;}
+  #head-zone{position:fixed; top:0; left:490px; right:0; height:14px; z-index:19;}
   .sh-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .sh-title{color:var(--head); font-size:20px; white-space:nowrap; overflow:hidden;
             text-overflow:ellipsis; max-width:34%;}
@@ -289,7 +289,7 @@
   #heatmap .hm.l3{background:#7fae7f;} #heatmap .hm.l4{background:#a8d8a8;}
 
   @media print{
-    #sidebar,.nav-btns,#head-zone,#sec-head .btn,#lvgate,#keygate{display:none !important;}
+    #sidebar,.nav-btns,#head-zone,#sec-head .btn,#lvgate,#keygate,#sbtab,#notetab{display:none !important;}
     #sec-head{position:static; background:none; border:none; padding:0 0 6px;}
     #main{padding-top:0; max-width:100%;}
     body{background:#fff; color:#000; font-size:12pt;}
@@ -356,6 +356,17 @@
   #notetab .cnt{background:var(--note); color:#1e2126; border-radius:9px;
                 padding:0 5px; font-size:11px; writing-mode:horizontal-tb; display:inline-block;}
   mark.editsel{background:rgba(210,168,107,.22); color:inherit; border-bottom:1px dashed var(--note);}
+  /* перемикач лівої панелі */
+  #sbtab{position:fixed; left:490px; top:44%; z-index:61; background:var(--bg3);
+         border:1px solid var(--border); border-left:none; border-radius:0 8px 8px 0;
+         color:var(--accent2); padding:14px 6px; cursor:pointer; font-size:18px; line-height:1;
+         user-select:none; transition:left .2s ease;}
+  #sbtab:hover{border-color:var(--accent); color:var(--btn-hov);}
+  #sbtab::before{content:"\00AB";}                 /* « сховати */
+  body.sbhide #sbtab{left:0;}
+  body.sbhide #sbtab::before{content:"\00BB";}       /* » показати */
+  body.sbhide #sidebar{display:none;}
+  body.sbhide #sec-head, body.sbhide #head-zone{left:0;}
 
   /* ---------- інтерактивний графік складності ---------- */
   .mdwidget{margin:0 0 18px;}
@@ -395,7 +406,7 @@
   ::-webkit-scrollbar-thumb{background:var(--bg3); border-radius:5px;}
   ::-webkit-scrollbar-track{background:var(--bg2);}
   @media (max-width:900px){ #layout{flex-direction:column;} #sidebar{width:100%; min-width:0; height:auto; position:static;}
-    #main{padding:76px 20px 60px;} #sec-head,#head-zone{left:0;} }
+    #main{padding:76px 20px 60px;} #sec-head,#head-zone{left:0;} #sbtab{display:none;} }
   /* ===== Home: герой + прогрес + продовжити ===== */
   .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
     border:1px solid var(--border); border-radius:16px; padding:26px 28px; margin-bottom:22px;}
@@ -564,6 +575,7 @@ try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentEleme
   </div>
 </div></div>
 
+<div id="sbtab" onclick="toggleSidebar()" title="Сховати / показати ліву панель"></div>
 <div id="notetab" onclick="toggleNoteBar()">замітки <span class="cnt" id="nb-count">0</span></div>
 <div id="notebar">
   <div class="nb-head">
@@ -1593,6 +1605,7 @@ function saveEditNote(){
 }
 
 function toggleNoteBar(){ document.getElementById('notebar').classList.toggle('open'); }
+function toggleSidebar(){ document.body.classList.toggle('sbhide'); }
 
 function renderNoteBar(){
   const id = CourseStore.getLastLesson();
