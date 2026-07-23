@@ -80,6 +80,8 @@
   #progress .fill{height:100%; background:var(--done); border-radius:3px;}
   #progress .stats{margin-top:5px; font-size:15px;}
   #lvswitch{display:flex; gap:8px; margin:0 0 10px; align-items:center; flex-wrap:wrap;}
+  #lvswitch > *{flex:0 0 auto;}
+  #lvswitch .btn{white-space:nowrap;}
   #lvswitch button{flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text-dim);
                    padding:5px 0; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:inherit;}
   #lvswitch button.on{color:var(--head); border-color:var(--accent);}
@@ -115,6 +117,18 @@
   html:not(.light) .lvl-badge.junior{border-color:rgba(108,199,154,.4);}
   html:not(.light) .lvl-badge.middle{border-color:rgba(224,173,106,.4);}
   html:not(.light) .lvl-badge.senior{border-color:rgba(177,145,214,.4);}
+  /* бейдж терміну дії ключа */
+  .exp-badge{display:inline-flex; align-items:center; gap:7px; background:var(--bg3);
+    border:1px solid var(--border); border-radius:999px; padding:5px 13px; font-size:13px; color:var(--text);}
+  .exp-badge i{width:8px; height:8px; border-radius:50%; background:var(--done); flex:0 0 auto;}
+  .exp-badge.soon{color:#fff; font-weight:bold; border-color:#e0554d;
+    animation:expblink 1.1s ease-in-out infinite;}
+  .exp-badge.soon i{background:#fff;}
+  @keyframes expblink{
+    0%,100%{background:rgba(224,85,77,.16); box-shadow:0 0 0 rgba(224,85,77,0);}
+    50%{background:rgba(224,85,77,.9); box-shadow:0 0 16px rgba(224,85,77,.6);}
+  }
+
   /* стильний tooltip */
   .tip{position:relative; display:inline-flex;}
   .tip::after{content:attr(data-tip); position:absolute; top:calc(100% + 8px); right:0;
@@ -778,6 +792,27 @@ function quizBank(id){
 }
 
 /* ================= вибір рівня ================= */
+/* бейдж терміну дії ключа (онлайн-режим): дата + блимання в останні 10 днів */
+function licenseExpiryHTML(){
+  const iso = window.LICENSE_EXPIRES;
+  if(!iso)
+    return '<span class="tip" data-tip="Цей ключ безстроковий — доступ до курсу не спливає.">'+
+      '<span class="exp-badge"><i></i>Ключ безстроковий</span></span>';
+  const end = new Date(iso);
+  if(isNaN(end)) return '';
+  const days = Math.ceil((end - Date.now()) / 864e5);
+  const dstr = end.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit', year:'numeric'});
+  const soon = days <= 10;
+  const left = days <= 0 ? 'сьогодні' : (days + ' ' + plural(days,'день','дні','днів'));
+  const tip = soon
+    ? 'Термін дії ключа спливає ' + (days<=0?'сьогодні':('за ' + left)) +
+      '. Продовжіть ключ, щоб не втратити доступ до курсу.'
+    : 'Дата, до якої ключ активний. Після неї доступ закриється, поки ключ не продовжать. Залишилось ' + left + '.';
+  return '<span class="tip" data-tip="'+esc(tip)+'">'+
+    '<span class="exp-badge'+(soon?' soon':'')+'"><i></i>Активний до '+dstr+
+    (soon? ' · '+left : '')+'</span></span>';
+}
+
 function renderGate(){
   $('#lvcards').innerHTML = COURSE.levels.map(l=>{
     const n = flat.filter(x=>CourseStore.levelIndex(x.level) <= CourseStore.levelIndex(l.id)).length;
@@ -807,6 +842,7 @@ function renderLvSwitch(){
   if(ONLINE){
     const lv = CourseStore.getLevel();
     $('#lvswitch').innerHTML = '<span class="lvl-badge '+lv+'"><i></i>Рівень: <b>'+LVNAME[lv]+'</b></span>'+
+      licenseExpiryHTML()+
       '<span class="tip" data-tip="Відв’язує ліцензійний ключ від цього комп’ютера, щоб можна було увійти з іншого. '+
       'Кількість перенесень на нові пристрої обмежена.">'+
       '<button class="btn" onclick="releaseDevice()">Звільнити пристрій</button></span>';
@@ -1754,6 +1790,7 @@ async function doActivate(){
   btn.disabled = true; $('#kg-err').textContent = 'Перевірка…';
   try{
     const r = await CourseAPI.activate(key, email);
+    window.LICENSE_EXPIRES = r.expiresAt || null;   // дата закінчення ключа (NULL = безстроковий)
     CourseStore.setLevel(r.level);           // рівень диктує ключ
     $('#keygate').style.display = 'none';
     $('#layout').style.display = 'flex';
