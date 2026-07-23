@@ -367,6 +367,7 @@
   body.sbhide #sbtab::before{content:"\00BB";}       /* » показати */
   body.sbhide #sidebar{display:none;}
   body.sbhide #sec-head, body.sbhide #head-zone{left:0;}
+  #navtoggle, #navback{display:none;}   /* показуються лише на мобільному */
 
   /* ---------- інтерактивний графік складності ---------- */
   .mdwidget{margin:0 0 18px;}
@@ -405,8 +406,52 @@
   ::-webkit-scrollbar{width:10px; height:10px;}
   ::-webkit-scrollbar-thumb{background:var(--bg3); border-radius:5px;}
   ::-webkit-scrollbar-track{background:var(--bg2);}
-  @media (max-width:900px){ #layout{flex-direction:column;} #sidebar{width:100%; min-width:0; height:auto; position:static;}
-    #main{padding:76px 20px 60px;} #sec-head,#head-zone{left:0;} #sbtab{display:none;} }
+  @media (max-width:900px){
+    /* off-canvas сайдбар (шухляда) */
+    #layout{display:block;}
+    #sidebar{position:fixed; top:0; left:0; z-index:70; width:86vw; max-width:340px;
+      min-width:0; height:100vh; overflow-y:auto; border-right:1px solid var(--border);
+      transform:translateX(-100%); transition:transform .25s ease; padding:16px 16px 40px;}
+    body.nav-open #sidebar{transform:translateX(0); box-shadow:0 0 40px rgba(0,0,0,.55);}
+    body.sbhide #sidebar{display:block;}           /* не ховати шухляду на мобільному */
+    #navback{display:none; position:fixed; inset:0; z-index:69; background:rgba(0,0,0,.5);}
+    body.nav-open #navback{display:block;}
+    #navtoggle{display:flex; align-items:center; justify-content:center;
+      position:fixed; top:8px; left:8px; z-index:72; width:42px; height:42px;
+      background:var(--bg3); border:1px solid var(--border); border-radius:9px;
+      color:var(--accent2); font-size:20px; cursor:pointer;}
+    #sbtab{display:none;}
+
+    /* контент на всю ширину, хедер статичний */
+    #main{flex:none; max-width:100%; margin:0; padding:60px 14px 90px;}
+    #sec-head{position:static; left:auto; right:auto; transform:none !important;
+      background:none; border:none; border-bottom:1px solid var(--border);
+      padding:0 0 10px; margin-bottom:10px;}
+    #head-zone{display:none;}
+    .sh-title{font-size:16px;}
+    .sec-title{font-size:23px;}
+
+    /* компактні компоненти */
+    .home-hero{padding:18px 15px; margin-bottom:16px;}
+    .home-hero h2{font-size:21px;}
+    .hero-row{gap:14px;}
+    .ring{width:88px; height:88px;}
+    .lvl-head{margin-top:22px;}
+    .lvl-grid{flex-direction:column;}
+    .lvl-card{min-width:0;}
+    .hero-cta{width:100%;}
+    .hero-cta .btn.big{width:100%;}
+    .lesson-cta{padding:16px 14px;}
+    .lesson-cta .row{flex-direction:column;}
+    .lesson-cta .row .btn{width:100%;}
+    .nav-btns{flex-direction:column; gap:8px; margin-top:28px;}
+    .nav-btns span{width:100%;}
+    .nav-btns .btn{width:100%; white-space:normal;}
+    #notebar{width:min(390px,92vw);}
+    .tip::after{max-width:80vw;}
+    #main pre{overflow-x:auto;}
+    #main table{display:block; overflow-x:auto;}
+  }
   /* ===== Home: герой + прогрес + продовжити ===== */
   .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
     border:1px solid var(--border); border-radius:16px; padding:26px 28px; margin-bottom:22px;}
@@ -576,6 +621,8 @@ try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentEleme
 </div></div>
 
 <div id="sbtab" onclick="toggleSidebar()" title="Сховати / показати ліву панель"></div>
+<button id="navtoggle" onclick="toggleNav()" aria-label="Меню">&#9776;</button>
+<div id="navback" onclick="toggleNav()"></div>
 <div id="notetab" onclick="toggleNoteBar()">замітки <span class="cnt" id="nb-count">0</span></div>
 <div id="notebar">
   <div class="nb-head">
@@ -975,6 +1022,7 @@ const LVL_ADDS = {
 
 /* ================= головна ================= */
 function openHome(){
+  closeNavMobile();
   const vis = visLessons();
   const mods = COURSE.modules.filter(m=>m.lessons.some(l=>CourseStore.visible(l.level)));
   const done = vis.filter(l=>CourseStore.isDone(l.id)).length;
@@ -1071,6 +1119,7 @@ function plural(n, one, few, many){
 async function openLesson(id, scrollTop){
   const les = flat.find(l=>l.id===id);
   if(!les) return;
+  closeNavMobile();
   // онлайн-режим: підвантажуємо вміст уроку з бекенду (один раз, з кешем)
   if(ONLINE && les.md == null && window.COURSE_CONTENT[id] === undefined){
     try{
@@ -1606,6 +1655,8 @@ function saveEditNote(){
 
 function toggleNoteBar(){ document.getElementById('notebar').classList.toggle('open'); }
 function toggleSidebar(){ document.body.classList.toggle('sbhide'); }
+function toggleNav(){ document.body.classList.toggle('nav-open'); }
+function closeNavMobile(){ document.body.classList.remove('nav-open'); }
 
 function renderNoteBar(){
   const id = CourseStore.getLastLesson();
