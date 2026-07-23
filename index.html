@@ -140,6 +140,10 @@
   .tip:hover::after, .tip:focus-within::after{opacity:1; transform:translateY(0);}
   html:not(.light) .tip::after{border-color:rgba(0,204,255,.32);
     box-shadow:0 0 18px rgba(0,204,255,.12), 0 8px 24px rgba(0,0,0,.55);}
+  /* у сайдбарі: прив'язати tooltip до лівого краю блоку, не ширше сайдбара */
+  #lvswitch{position:relative;}
+  #lvswitch .tip{position:static;}
+  #lvswitch .tip::after{left:0; right:auto; top:calc(100% + 8px); max-width:100%;}
   /* походження теми */
   .origin{font-size:10px; padding:1px 7px; border-radius:9px; margin-left:5px;
           border:1px solid currentColor; white-space:nowrap;}
@@ -845,7 +849,7 @@ function renderLvSwitch(){
       licenseExpiryHTML()+
       '<span class="tip" data-tip="Відв’язує ліцензійний ключ від цього комп’ютера, щоб можна було увійти з іншого. '+
       'Кількість перенесень на нові пристрої обмежена.">'+
-      '<button class="btn" onclick="releaseDevice()">Звільнити пристрій</button></span>';
+      '<button class="btn" onclick="releaseDevice()">&nbsp;&nbsp;Звільнити пристрій&nbsp;&nbsp;</button></span>';
     return;
   }
   $('#lvswitch').innerHTML = COURSE.levels.map(l=>
