@@ -75,7 +75,16 @@ window.CourseAPI = (function () {
         body: JSON.stringify({ key: key.trim(), email: email.trim(), deviceId: did, force: !!force })
       });
       token = j.token;
-      return j; // {token, level, email, expiresAt, deviceLimit}
+      return j; // {token, refreshToken, level, email, expiresAt, deviceLimit}
+    },
+    async refresh(refreshToken) {           // авто-вхід без збереження ключа
+      const did = await deviceId();
+      const j = await req('/refresh', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken, deviceId: did })
+      });
+      token = j.token;
+      return j;
     },
     curriculum: () => req('/curriculum'),
     lesson: id => req('/lesson/' + encodeURIComponent(id)),
