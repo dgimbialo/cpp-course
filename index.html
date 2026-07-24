@@ -1111,6 +1111,17 @@ function openHome(){
   });
   html += '</div>';
 
+  // --- тести за рівнем (лише офлайн: усі банки тестів завантажені) ---
+  if(!ONLINE){
+    const lvlBtns = COURSE.levels.filter(l=>CourseStore.visible(l.id)).map(l=>{
+      const n = allLevelQuestions(l.id).length;
+      return '<button class="btn" onclick="startLevelQuiz(\''+l.id+'\')"'+(n?'':' disabled')+'>&#128221; '+esc(l.label)+' ('+n+')</button>';
+    }).join('');
+    html += '<div class="lvl-head">Тести за рівнем</div>'+
+      '<div class="lvl-sub">Пройти всі питання одного рівня складності одним перемішаним тестом.</div>'+
+      '<div class="hero-cta" style="margin-bottom:6px">'+lvlBtns+'</div>';
+  }
+
   // --- модулі з прогресом ---
   html += '<div class="lvl-head">Модулі курсу</div><div class="lvl-sub">'+mods.length+' модулів на вашому рівні.</div>';
   mods.forEach(m=>{
@@ -1480,18 +1491,36 @@ function startQuiz(id){
   quiz = { id:id, qs:qs, idx:0, correct:0, answered:false };
   renderQuiz(); window.scrollTo({top:0});
 }
+/* усі питання певного рівня складності з усіх завантажених банків */
+function allLevelQuestions(level){
+  const out = [], T = window.COURSE_TESTS || {};
+  flat.forEach(les=>{ const bank = T[les.id]; if(bank) bank.forEach(q=>{ if((q.lvl||'junior')===level) out.push(q); }); });
+  return out;
+}
+function startLevelQuiz(level){
+  const qs = shuffleArr(allLevelQuestions(level)).map(shuffleQuestion);
+  if(!qs.length){ alert('Немає питань цього рівня.'); return; }
+  quiz = { id:null, mode:'level', level:level, qs:qs, idx:0, correct:0, answered:false };
+  renderQuiz(); window.scrollTo({top:0});
+}
 function renderQuiz(){
-  const les = flat.find(l=>l.id===quiz.id);
+  const isLevel = quiz.mode === 'level';
+  const les = isLevel ? null : flat.find(l=>l.id===quiz.id);
   const q = quiz.qs[quiz.idx];
-  let html = '<div class="crumbs">Тест &middot; '+esc(les.num+' '+les.title)+
-             ' &middot; рівень '+LVNAME[CourseStore.getLevel()]+'</div>';
+  const crumbs = isLevel
+    ? 'Тест рівня &middot; '+esc(LVNAME[quiz.level])+' &middot; '+quiz.qs.length+' питань'
+    : 'Тест &middot; '+esc(les.num+' '+les.title)+' &middot; рівень '+LVNAME[CourseStore.getLevel()];
+  let html = '<div class="crumbs">'+crumbs+'</div>';
   if(!q){
-    CourseStore.recordQuiz(quiz.id, quiz.correct, quiz.qs.length);
+    if(!isLevel) CourseStore.recordQuiz(quiz.id, quiz.correct, quiz.qs.length);
     const pct = Math.round(quiz.correct/quiz.qs.length*100);
+    const again = isLevel ? 'startLevelQuiz(\''+quiz.level+'\')' : 'startQuiz(\''+quiz.id+'\')';
+    const back  = isLevel ? 'refreshUI();openHome()' : 'refreshUI();openLesson(\''+quiz.id+'\')';
+    const backLbl = isLevel ? '&larr; На головну' : '&larr; До уроку';
     html += '<div class="quiz-card"><div class="quiz-score">Результат: '+quiz.correct+' з '+quiz.qs.length+' ('+pct+'%)</div>'+
-      '<p>'+(pct>=80? 'Чудово, тему засвоєно.' : pct>=50? 'Непогано, але перечитай слабкі місця.' : 'Варто перечитати урок і повторити тест.')+'</p>'+
-      '<button class="btn" onclick="startQuiz(\''+quiz.id+'\')">&#8635; Ще раз</button> '+
-      '<button class="btn" onclick="refreshUI();openLesson(\''+quiz.id+'\')">&larr; До уроку</button></div>';
+      '<p>'+(pct>=80? 'Чудово, тему засвоєно.' : pct>=50? 'Непогано, але перечитай слабкі місця.' : 'Варто перечитати матеріал і повторити тест.')+'</p>'+
+      '<button class="btn" onclick="'+again+'">&#8635; Ще раз</button> '+
+      '<button class="btn" onclick="'+back+'">'+backLbl+'</button></div>';
     $('#main').innerHTML = html; return;
   }
   html += '<div class="quiz-card"><div class="qnum">Питання '+(quiz.idx+1)+' з '+quiz.qs.length+
@@ -1501,7 +1530,7 @@ function renderQuiz(){
     (q.code? '<pre><code>'+esc(q.code)+'</code></pre>':'')+
     q.options.map((o,i)=>'<button class="quiz-opt" data-i="'+i+'" onclick="answerQuiz('+i+')">'+esc(o)+'</button>').join('')+
     '<div id="quiz-after"></div></div>'+
-    '<button class="btn" onclick="openLesson(\''+quiz.id+'\')">&times; Перервати</button>';
+    '<button class="btn" onclick="'+(isLevel?'openHome()':'openLesson(\''+quiz.id+'\')')+'">&times; Перервати</button>';
   $('#main').innerHTML = html;
   document.querySelectorAll('#main pre code').forEach(c=>{ c.innerHTML = hl(c.textContent); });
 }
