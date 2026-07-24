@@ -454,24 +454,25 @@
   }
   /* ===== Home: герой + прогрес + продовжити ===== */
   .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
-    border:1px solid var(--border); border-radius:16px; padding:26px 28px; margin-bottom:22px;}
-  .home-hero h2{font-size:27px; color:var(--head); font-weight:normal; margin:0 0 6px;}
-  .home-hero .ded{color:var(--text-dim); font-size:14px; margin-bottom:18px; font-style:italic;}
-  .hero-row{display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
-  .ring{--p:0; width:104px; height:104px; border-radius:50%; flex:0 0 auto; position:relative;
+    border:1px solid var(--border); border-radius:16px; padding:28px 32px; margin-bottom:22px;}
+  .home-hero h2{font-size:28px; color:var(--head); font-weight:600; margin:0 0 20px; letter-spacing:.2px;}
+  .hero-row{display:flex; gap:28px; align-items:center; flex-wrap:wrap;}
+  .ring{--p:0; width:114px; height:114px; border-radius:50%; flex:0 0 auto; position:relative;
     background:conic-gradient(var(--done) calc(var(--p)*1%), var(--bg) 0);}
-  .ring::after{content:""; position:absolute; inset:9px; border-radius:50%; background:var(--bg2);}
+  .ring::after{content:""; position:absolute; inset:10px; border-radius:50%; background:var(--bg2);}
   .ring .rt{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
     justify-content:center; z-index:1;}
-  .ring .rt b{font-size:24px; color:var(--head);} .ring .rt span{font-size:11px; color:var(--text-dim);}
-  .hero-mid{flex:1; min-width:200px;}
-  .hero-stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
-  .chip{display:inline-flex; align-items:center; gap:6px; background:var(--bg); border:1px solid var(--border);
-    border-radius:999px; padding:6px 13px; font-size:13px; color:var(--text);}
+  .ring .rt b{font-size:27px; color:var(--head); font-weight:700;} .ring .rt span{font-size:11px; color:var(--text-dim); letter-spacing:.5px;}
+  .hero-mid{flex:1; min-width:220px;}
+  .hero-stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; align-items:center;}
+  .chip{display:inline-flex; align-items:center; gap:6px; min-height:34px; background:var(--bg); border:1px solid var(--border);
+    border-radius:999px; padding:7px 15px; font-size:13.5px; color:var(--text);}
   .chip b{color:var(--head);}
   .chip.streak{border-color:var(--note); color:var(--note);}
-  .hero-cta{display:flex; gap:10px; flex-wrap:wrap;}
-  .btn.big{min-height:46px; padding:0 22px; font-size:16px; border-radius:10px;}
+  .chip.next{border-color:var(--accent); color:var(--accent2); background:var(--bg2);}
+  .chip.next b{color:var(--accent2); font-weight:normal;}
+  .hero-cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .btn.big{min-height:48px; padding:0 26px; font-size:16px; border-radius:11px;}
 
   /* ===== порівняння рівнів ===== */
   .lvl-head{display:flex; align-items:center; gap:14px; font-size:14px; color:var(--head);
@@ -596,7 +597,6 @@ try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentEleme
 <div id="layout" style="display:none">
   <nav id="sidebar">
     <h1 id="course-title"></h1>
-    <div class="authors" id="course-sub"></div>
     <div id="lvswitch"></div>
     <input id="search" type="search" placeholder="Пошук по курсу… (мін. 3 символи)">
     <div id="search-results"></div>
@@ -859,8 +859,8 @@ function quizBank(id){
 function licenseExpiryHTML(){
   const iso = window.LICENSE_EXPIRES;
   if(!iso)
-    return '<span class="tip" data-tip="Цей ключ безстроковий — доступ до курсу не спливає.">'+
-      '<span class="exp-badge"><i></i>Ключ безстроковий</span></span>';
+    return '<span class="tip" data-tip="Ця ліцензія безстрокова — доступ до курсу не спливає.">'+
+      '<span class="exp-badge"><i></i>Ліцензія безстрокова</span></span>';
   const end = new Date(iso);
   if(isNaN(end)) return '';
   const days = Math.ceil((end - Date.now()) / 864e5);
@@ -868,9 +868,9 @@ function licenseExpiryHTML(){
   const soon = days <= 10;
   const left = days <= 0 ? 'сьогодні' : (days + ' ' + plural(days,'день','дні','днів'));
   const tip = soon
-    ? 'Термін дії ключа спливає ' + (days<=0?'сьогодні':('за ' + left)) +
-      '. Продовжіть ключ, щоб не втратити доступ до курсу.'
-    : 'Дата, до якої ключ активний. Після неї доступ закриється, поки ключ не продовжать. Залишилось ' + left + '.';
+    ? 'Термін дії ліцензії спливає ' + (days<=0?'сьогодні':('за ' + left)) +
+      '. Продовжіть ліцензію, щоб не втратити доступ до курсу.'
+    : 'Дата, до якої ліцензія активна. Після неї доступ закриється, поки ліцензію не продовжать. Залишилось ' + left + '.';
   return '<span class="tip" data-tip="'+esc(tip)+'">'+
     '<span class="exp-badge'+(soon?' soon':'')+'"><i></i>Активний до '+dstr+
     (soon? ' · '+left : '')+'</span></span>';
@@ -957,7 +957,8 @@ function renderTOC(){
           esc((COURSE.origins[les.from]||{}).label||'')+'"></span>':'') +
         (qz? '<span class="qbadge">&#128221;'+qz.best+'/'+qz.total+'</span>':'');
       s.onclick = ()=>openLesson(les.id);
-      if(!les.md) s.title = 'Урок ще не написаний — у програмі як план';
+      // (у онлайн-режимі вміст уроку тягнеться при відкритті, тож підказку
+      //  «ще не написаний» не показуємо — усі уроки в програмі написані)
       wrap.appendChild(s);
     });
     div.appendChild(wrap);
@@ -1033,12 +1034,12 @@ function openHome(){
     '<span class="sh-sp"></span>'+ headerToolsHTML()+
     '<button class="btn tiny" onclick="bumpFont(-1)">A&minus;</button>'+
     '<button class="btn tiny" onclick="bumpFont(1)">A+</button>'+
+    themeBtnHTML()+
     '</div></div><div class="content">';
 
   // --- герой ---
   html += '<div class="home-hero">'+
     '<h2>'+esc(COURSE.title)+'</h2>'+
-    (COURSE.subtitle? '<div class="ded">'+esc(COURSE.subtitle)+'</div>':'')+
     '<div class="hero-row">'+
       '<div class="ring" style="--p:'+pct+'"><div class="rt"><b>'+pct+'%</b><span>пройдено</span></div></div>'+
       '<div class="hero-mid">'+
@@ -1050,7 +1051,7 @@ function openHome(){
         '<div class="hero-cta">'+
           (nx? '<button class="btn primary big" onclick="openLesson(\''+nx.id+'\')">'+
                (started?'Продовжити':'Почати курс')+' &rarr;</button>':'')+
-          (nx? '<span class="chip" style="align-self:center">'+esc(nx.num+' '+nx.title)+'</span>':'')+
+          (nx? '<span class="chip next" style="align-self:center">далі: <b>'+esc(nx.num+' '+nx.title)+'</b></span>':'')+
         '</div>'+
       '</div>'+
     '</div></div>';
@@ -1069,7 +1070,7 @@ function openHome(){
     const first = lv.id==='junior';
     html += '<div class="lvl-card '+lv.id+(isCur?' cur':'')+'">'+
       '<div class="lh"><span class="lname">'+esc(lv.label)+'</span>'+
-        (isCur?'<span class="badge-cur">ваш рівень</span>':'')+'</div>'+
+        (isCur?'<span class="badge-cur">Активована ліцензія</span>':'')+'</div>'+
       '<div class="lcount">'+(first?'':'+ ')+'<b style="color:var(--head)">'+cntAt[lv.id]+'</b> '+
         plural(cntAt[lv.id],'урок','уроки','уроків')+(first?' бази':' поверх попереднього')+
         ' · доступно '+cum+'</div>'+
@@ -1153,7 +1154,7 @@ async function openLesson(id, scrollTop){
     headerToolsHTML()+
     '<button class="btn tiny" onclick="bumpFont(-1)">A&minus;</button>'+
     '<button class="btn tiny" onclick="bumpFont(1)">A+</button>'+
-    '<button class="btn tiny" onclick="window.print()">&#128424;</button>'+
+    themeBtnHTML()+
     '</div></div><div class="content">';
 
   html += '<div class="crumbs">Модуль '+les._mod.num+'. '+esc(les._mod.title)+'</div>';
@@ -1762,8 +1763,10 @@ function themeLabel(){
     ? '🌙 Темна тема' : '☀ Світла тема';
 }
 function headerToolsHTML(){
-  return '<button class="btn tiny" onclick="openNotesPage()" title="усі замітки окремою сторінкою">🗒 Замітки</button>'+
-         '<button class="btn tiny themebtn" onclick="toggleTheme()" title="перемкнути тему">'+themeLabel()+'</button>';
+  return '<button class="btn tiny" onclick="openNotesPage()" title="усі замітки окремою сторінкою">🗒 Замітки</button>';
+}
+function themeBtnHTML(){
+  return '<button class="btn tiny themebtn" onclick="toggleTheme()" title="перемкнути тему">'+themeLabel()+'</button>';
 }
 function updateThemeBtn(){
   document.querySelectorAll('.themebtn').forEach(b => b.textContent = themeLabel());
@@ -1817,7 +1820,6 @@ window.addEventListener('storage', e => {
 /* ================= старт ================= */
 function boot(){
   $('#course-title').textContent = COURSE.title;
-  $('#course-sub').textContent = COURSE.subtitle || '';
   if(window.COURSE_EDIT_NOTES) CourseStore.mergeEdits(window.COURSE_EDIT_NOTES);
   renderLvSwitch();
   refreshUI();
