@@ -84,6 +84,7 @@
   #lvswitch{display:flex; gap:8px; margin:0 0 10px; align-items:center; flex-wrap:wrap;}
   #lvswitch > *{flex:0 0 auto;}
   #lvswitch .btn{white-space:nowrap;}
+  .logout-btn:hover{border-color:#e0554d !important; color:#ff9b91 !important;}
   #lvswitch button{flex:1; background:var(--bg3); border:1px solid var(--border); color:var(--text-dim);
                    padding:5px 0; border-radius:6px; cursor:pointer; font-size:12.5px; font-family:inherit;}
   #lvswitch button.on{color:var(--head); border-color:var(--accent);}
@@ -460,8 +461,9 @@
     #main table{display:block; overflow-x:auto;}
   }
   /* ===== Home: герой + прогрес + продовжити ===== */
-  .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
+  .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3)); position:relative;
     border:1px solid var(--border); border-radius:16px; padding:28px 32px; margin-bottom:22px;}
+  .hero-logout{position:absolute; top:16px; right:16px;}
   .home-hero h2{font-size:28px; color:var(--head); font-weight:600; margin:0 0 6px; letter-spacing:.2px;}
   .home-hero .ded{color:var(--text-dim); font-size:14px; margin-bottom:20px; font-style:italic;}
   .hero-row{display:flex; gap:28px; align-items:center; flex-wrap:wrap;}
@@ -481,6 +483,9 @@
   .chip.next b{color:var(--accent2); font-weight:normal;}
   .hero-cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
   .btn.big{min-height:48px; padding:0 26px; font-size:16px; border-radius:11px;}
+  /* «Продовжити» в героєві — та сама форма (пігулка) й висота, що й чіп «далі:» */
+  .hero-cta .chip.next{min-height:0; height:44px;}
+  .hero-cta .btn.big{min-height:0; height:44px; border-radius:999px; padding:0 26px; font-size:15px;}
 
   /* ===== порівняння рівнів ===== */
   .lvl-head{display:flex; align-items:center; gap:14px; font-size:14px; color:var(--head);
@@ -1056,6 +1061,7 @@ function openHome(){
 
   // --- герой ---
   html += '<div class="home-hero">'+
+    (ONLINE? '<button class="btn tiny logout-btn hero-logout" onclick="logout()" title="Вийти на цьому пристрої">&#128682; Вийти</button>':'')+
     '<h2>'+esc(COURSE.title)+'</h2>'+
     (COURSE.subtitle? '<div class="ded">'+esc(COURSE.subtitle)+'</div>':'')+
     '<div class="hero-row">'+
@@ -1169,7 +1175,6 @@ async function openLesson(id, scrollTop){
   let html = '<div id="sec-head"><div class="sh-row">'+
     homeBtnHTML()+
     '<span class="sh-title" title="'+esc(les.num+' '+les.title)+'">'+
-      '<span class="loc-mod">Модуль '+les._mod.num+'.</span> '+
       '<span class="loc-les">Урок '+esc(les.num)+'</span></span>'+
     (les.level!=='junior'? '<span class="lvtag '+les.level+'">'+LVNAME[les.level]+'</span>':'')+
     (done? '<span class="read-badge" title="урок пройдено">&#10003; пройдено</span>':'')+
@@ -1847,6 +1852,12 @@ window.addEventListener('storage', e => {
 /* ================= старт ================= */
 function boot(){
   $('#course-title').textContent = COURSE.title;
+  // пошук доступний лише локально (офлайн): онлайн-режим вантажить контент
+  // поурочно, тож повнотекстовий пошук по всьому курсу неможливий
+  if(ONLINE){
+    const se = $('#search'); if(se) se.style.display = 'none';
+    const sr = $('#search-results'); if(sr) sr.style.display = 'none';
+  }
   if(window.COURSE_EDIT_NOTES) CourseStore.mergeEdits(window.COURSE_EDIT_NOTES);
   renderLvSwitch();
   refreshUI();
@@ -1950,6 +1961,14 @@ function startHeartbeat(){
     try{ await CourseAPI.heartbeat(); }
     catch(e){ if(e.status===401) onSessionLost(); }
   }, 60000);
+}
+async function logout(){
+  if(!confirm('Вийти на цьому пристрої?\nЩоб повернутись, знадобиться пошта й ключ.')) return;
+  try{ await CourseAPI.release(); }catch(e){}    // звільнити слот пристрою на сервері
+  if(hbTimer){ clearInterval(hbTimer); hbTimer = null; }
+  CourseAPI.setToken(null);
+  clearSession();
+  showKeyGate('Ви вийшли. Увійдіть, щоб продовжити.');
 }
 function onSessionLost(){
   CourseAPI.setToken(null);
