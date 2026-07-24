@@ -68,19 +68,23 @@ window.CourseAPI = (function () {
     setToken: t => { token = t; },
     hasToken: () => !!token,
     deviceId,
-    async activate(key, email) {
+    async activate(key, email, force) {
       const did = await deviceId();
       const j = await req('/activate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key.trim(), email: email.trim(), deviceId: did })
+        body: JSON.stringify({ key: key.trim(), email: email.trim(), deviceId: did, force: !!force })
       });
       token = j.token;
-      return j; // {token, level, email}
+      return j; // {token, level, email, expiresAt, deviceLimit}
     },
     curriculum: () => req('/curriculum'),
     lesson: id => req('/lesson/' + encodeURIComponent(id)),
     glossary: () => req('/glossary'),
-    heartbeat: () => req('/heartbeat', { method: 'POST' }),
+    async heartbeat() {
+      const j = await req('/heartbeat', { method: 'POST' });
+      if (j && j.token) token = j.token;   // сесія продовжена свіжим токеном
+      return j;
+    },
     release: () => req('/release', { method: 'POST' })
   };
 })();

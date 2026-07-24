@@ -582,15 +582,15 @@ try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentEleme
 <div id="keygate" style="display:none"><div class="box" style="max-width:460px">
   <h1>Інтерактивний курс C++</h1>
   <div class="sub">Доступ за ліцензійним ключем. Введіть пошту, на яку видано ключ,
-    і сам ключ. Один ключ працює на одному пристрої.</div>
-  <div class="kg-form">
-    <label>Пошта</label>
-    <input id="kg-email" type="email" autocomplete="email" placeholder="you@example.com">
-    <label>Ліцензійний ключ</label>
-    <input id="kg-key" type="text" autocomplete="off" placeholder="CPP-XXXX-XXXX-XXXX">
-    <button class="btn" id="kg-btn" onclick="doActivate()">Увійти</button>
+    і сам ключ. Один ключ працює одночасно на двох пристроях.</div>
+  <form class="kg-form" id="kg-form" autocomplete="on" onsubmit="doActivate(); return false;">
+    <label for="kg-email">Пошта</label>
+    <input id="kg-email" name="username" type="email" autocomplete="username" placeholder="you@example.com">
+    <label for="kg-key">Ліцензійний ключ</label>
+    <input id="kg-key" name="password" type="password" autocomplete="current-password" placeholder="CPP-XXXX-XXXX-XXXX">
+    <button class="btn" id="kg-btn" type="submit">Увійти</button>
     <div id="kg-err" class="kg-err"></div>
-  </div>
+  </form>
 </div></div>
 
 <div id="layout" style="display:none">
@@ -905,10 +905,7 @@ function renderLvSwitch(){
   if(ONLINE){
     const lv = CourseStore.getLevel();
     $('#lvswitch').innerHTML = '<span class="lvl-badge '+lv+'"><i></i>Рівень: <b>'+LVNAME[lv]+'</b></span>'+
-      licenseExpiryHTML()+
-      '<span class="tip" data-tip="Відв’язує ліцензійний ключ від цього комп’ютера, щоб можна було увійти з іншого. '+
-      'Кількість перенесень на нові пристрої обмежена.">'+
-      '<button class="btn" onclick="releaseDevice()">&nbsp;&nbsp;Звільнити пристрій&nbsp;&nbsp;</button></span>';
+      licenseExpiryHTML();
     return;
   }
   $('#lvswitch').innerHTML = COURSE.levels.map(l=>
@@ -1834,39 +1831,76 @@ function boot(){
 initSearch();
 
 /* ================= онлайн-режим: ключ, сесія, heartbeat ================= */
+/* збережений логін для авто-входу (браузер + localStorage) */
+function saveLogin(email, key){ try{ localStorage.setItem('cppLogin', JSON.stringify({email, key})); }catch(e){} }
+function loadLogin(){ try{ return JSON.parse(localStorage.getItem('cppLogin')||'null'); }catch(e){ return null; } }
+function clearLogin(){ try{ localStorage.removeItem('cppLogin'); }catch(e){} }
+
 function showKeyGate(msg){
   if(hbTimer){ clearInterval(hbTimer); hbTimer = null; }
   $('#layout').style.display = 'none';
   $('#lvgate').style.display = 'none';
   $('#keygate').style.display = 'flex';
   $('#kg-err').textContent = msg || '';
-  const k = $('#kg-key'); if(k) k.onkeydown = e => { if(e.key==='Enter') doActivate(); };
-  const em = $('#kg-email'); if(em) em.onkeydown = e => { if(e.key==='Enter') doActivate(); };
+  // підставити збережені пошту/ключ, якщо поля порожні
+  const saved = loadLogin();
+  if(saved){
+    if(!$('#kg-email').value) $('#kg-email').value = saved.email || '';
+    if(!$('#kg-key').value)   $('#kg-key').value   = saved.key   || '';
+  }
 }
 const KG_ERR = {
   invalid_key:'Невірний ключ.', key_revoked:'Ключ анульовано.',
   key_expired:'Термін дії ключа вичерпано.', email_mismatch:'Пошта не збігається з ключем.',
-  bound_to_other_device:'Ключ уже прив’язаний до іншого пристрою.',
-  active_elsewhere:'Ключ уже використовується на іншому пристрої.',
   missing_fields:'Заповніть пошту й ключ.'
 };
-async function doActivate(){
+function enterCourse(r){
+  window.LICENSE_EXPIRES = r.expiresAt || null;   // дата закінчення ключа (NULL = безстроковий)
+  CourseStore.setLevel(r.level);                  // рівень диктує ключ
+  $('#keygate').style.display = 'none';
+  $('#layout').style.display = 'flex';
+  startHeartbeat();
+  boot();
+}
+function deviceLimitConfirm(data){
+  const lim = (data && data.limit) || 2;
+  return confirm('Ліміт пристроїв перевищено.\n\nЦей ключ уже активний на '+lim+' пристроях. '+
+    'Натисніть OK, щоб вийти на всіх попередніх пристроях і продовжити тут.');
+}
+async function doActivate(force){
   const email = ($('#kg-email').value||'').trim();
   const key   = ($('#kg-key').value||'').trim();
   const btn = $('#kg-btn');
   if(!email || !key){ $('#kg-err').textContent = 'Заповніть пошту й ключ.'; return; }
   btn.disabled = true; $('#kg-err').textContent = 'Перевірка…';
   try{
-    const r = await CourseAPI.activate(key, email);
-    window.LICENSE_EXPIRES = r.expiresAt || null;   // дата закінчення ключа (NULL = безстроковий)
-    CourseStore.setLevel(r.level);           // рівень диктує ключ
-    $('#keygate').style.display = 'none';
-    $('#layout').style.display = 'flex';
-    startHeartbeat();
-    boot();
+    const r = await CourseAPI.activate(key, email, force);
+    saveLogin(email, key);
+    enterCourse(r);
   }catch(e){
-    $('#kg-err').textContent = KG_ERR[e.status===0?'':e.message] || ('Помилка: '+(e.message||'невідома'));
+    if(e.status===409 && e.data && e.data.error==='device_limit'){
+      $('#kg-err').textContent = '';
+      btn.disabled = false;
+      if(deviceLimitConfirm(e.data)) return doActivate(true);
+    } else {
+      $('#kg-err').textContent = KG_ERR[e.message] || ('Помилка: '+(e.message||'невідома'));
+    }
   }finally{ btn.disabled = false; }
+}
+async function autoLogin(saved){
+  showKeyGate('Вхід…');
+  try{
+    const r = await CourseAPI.activate(saved.key, saved.email, false);
+    enterCourse(r);
+  }catch(e){
+    if(e.status===409 && e.data && e.data.error==='device_limit'){
+      showKeyGate('');
+      if(deviceLimitConfirm(e.data)) doActivate(true);
+      return;
+    }
+    if(['invalid_key','email_mismatch','key_expired','key_revoked'].indexOf(e.message)>=0) clearLogin();
+    showKeyGate(KG_ERR[e.message] || '');
+  }
 }
 function startHeartbeat(){
   if(hbTimer) clearInterval(hbTimer);
@@ -1877,28 +1911,15 @@ function startHeartbeat(){
 }
 function onSessionLost(){
   CourseAPI.setToken(null);
-  showKeyGate('Сесію завершено (ключ анульовано або вхід з іншого пристрою). Увійдіть знову.');
-}
-async function releaseDevice(){
-  if(!confirm('Відв’язати ключ від цього пристрою?\nПісля цього тут доступ зникне, і ключем можна буде увійти на іншому пристрої. Кількість перенесень обмежена.'))
-    return;
-  try{
-    const r = await CourseAPI.release();
-    CourseAPI.setToken(null);
-    const left = (r && r.resets_left);
-    showKeyGate('Пристрій звільнено'+(left>=0? ' (залишилось перенесень: '+left+')':'')+'. Тепер ключем можна увійти на іншому пристрої.');
-  }catch(e){
-    if(e.status===403 && e.data && e.data.error==='device_reset_limit')
-      alert('Ліміт перенесень пристрою вичерпано ('+e.data.used+'/'+e.data.limit+'). Зверніться до підтримки.');
-    else if(e.status===401) onSessionLost();
-    else alert('Не вдалося звільнити пристрій: '+(e.message||'помилка'));
-  }
+  showKeyGate('Сесію завершено: цим ключем увійшли на іншому пристрої й перевищили ліміт. За потреби увійдіть знову.');
 }
 
 /* ================= запуск ================= */
 if(ONLINE){
-  // онлайн: завжди починаємо з екрана ключа (токен живе лише в пам’яті)
-  showKeyGate('');
+  // онлайн: якщо збережено логін — авто-вхід; інакше екран ключа
+  const saved = loadLogin();
+  if(saved && saved.email && saved.key) autoLogin(saved);
+  else showKeyGate('');
 }else if(CourseStore.getLevel()){
   $('#layout').style.display='flex'; boot();
 }else{
