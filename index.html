@@ -1461,8 +1461,21 @@ function fallbackCopy(text, done){
 
 /* ================= тести ================= */
 let quiz = null;
+function shuffleArr(a){
+  a = a.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+/* перемішати варіанти відповідей і перерахувати індекс правильної */
+function shuffleQuestion(q){
+  const order = shuffleArr(q.options.map((_,i)=>i));
+  return Object.assign({}, q, {
+    options: order.map(k=>q.options[k]),
+    correct: order.indexOf(q.correct)
+  });
+}
 function startQuiz(id){
-  const qs = quizBank(id);
+  const qs = shuffleArr(quizBank(id)).map(shuffleQuestion);   // мішаємо і питання, і варіанти
   if(!qs.length) return;
   quiz = { id:id, qs:qs, idx:0, correct:0, answered:false };
   renderQuiz(); window.scrollTo({top:0});
