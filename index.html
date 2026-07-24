@@ -19,6 +19,7 @@
     --neon:#00ccff; --neon2:#ff55bb; --neon3:#cc44ff;
     --glow-cyan:0 0 18px rgba(0,204,255,.30);
     --glow-pink:0 0 18px rgba(255,85,187,.28);
+    --cur-mod:#ff9b91;   /* колір поточного модуля/уроку в дереві й хедері */
   }
   html.light{
     --bg:#f4f3ef; --bg2:#ffffff; --bg3:#e8e7e0; --border:#cfcec5;
@@ -32,6 +33,7 @@
     --ref-t:#2f5d8a; --book-t:#44702f; --btn-hov:#16324d;
     --neon:#2f6ea5; --neon2:#b03a7a; --neon3:#7a5a9e;
     --glow-cyan:none; --glow-pink:none;
+    --cur-mod:#b23a2e;
   }
   html.light .cnote code{background:rgba(0,0,0,.08);}
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -97,6 +99,10 @@
   .toc-les{font-size:13.5px; padding:4px 6px 4px 14px; cursor:pointer; border-radius:5px; color:var(--text);}
   .toc-les:hover{background:var(--bg3);}
   .toc-les.active{background:var(--bg3); color:var(--accent2);}
+  .toc-mod.cur-mod>.mtitle{color:var(--cur-mod); border-radius:5px; padding-left:9px;
+    box-shadow:inset 3px 0 0 var(--cur-mod);}
+  .sh-title .loc-mod{color:var(--cur-mod);}      /* «Модуль N.» — як модуль у дереві */
+  .sh-title .loc-les{color:var(--accent2);}      /* «Урок X.Y» — як активний урок у дереві */
   .toc-les.empty{color:var(--todo); font-style:italic;}
   .toc-les::before{content:"○"; color:var(--todo); font-size:9px; margin-right:6px; vertical-align:1px;}
   .toc-les.ready::before{content:"●"; color:var(--accent);}
@@ -447,7 +453,8 @@
     .nav-btns{flex-direction:column; gap:8px; margin-top:28px;}
     .nav-btns span{width:100%;}
     .nav-btns .btn{width:100%; white-space:normal;}
-    #notebar{width:min(390px,92vw);}
+    /* замітки недоступні на мобільному (кнопка, бічна вкладка, панель, контекстне меню) */
+    .notesbtn, #notetab, #notebar, #ctxmenu{display:none !important;}
     .tip::after{max-width:80vw;}
     #main pre{overflow-x:auto;}
     #main table{display:block; overflow-x:auto;}
@@ -455,7 +462,8 @@
   /* ===== Home: герой + прогрес + продовжити ===== */
   .home-hero{background:linear-gradient(135deg, var(--bg2), var(--bg3));
     border:1px solid var(--border); border-radius:16px; padding:28px 32px; margin-bottom:22px;}
-  .home-hero h2{font-size:28px; color:var(--head); font-weight:600; margin:0 0 20px; letter-spacing:.2px;}
+  .home-hero h2{font-size:28px; color:var(--head); font-weight:600; margin:0 0 6px; letter-spacing:.2px;}
+  .home-hero .ded{color:var(--text-dim); font-size:14px; margin-bottom:20px; font-style:italic;}
   .hero-row{display:flex; gap:28px; align-items:center; flex-wrap:wrap;}
   .ring{--p:0; width:114px; height:114px; border-radius:50%; flex:0 0 auto; position:relative;
     background:conic-gradient(var(--done) calc(var(--p)*1%), var(--bg) 0);}
@@ -513,6 +521,9 @@
   .lesson-cta.done{border-color:var(--done);}
   .lesson-cta .ct{color:var(--head); font-size:16px; margin-bottom:14px;}
   .lesson-cta .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+  /* сайдбар: заголовок «Зміст:» над деревом */
+  .toc-head{color:var(--text-dim); font-size:13px; text-transform:uppercase;
+    letter-spacing:1.5px; margin:2px 0 8px; font-weight:bold;}
   /* сайдбар: прогрес модуля в дереві */
   .toc-mod .mtitle{position:relative;}
   .mprog{height:3px; background:var(--done); border-radius:2px; margin-top:5px; transition:width .3s;
@@ -597,6 +608,7 @@ try{ if(localStorage.getItem('cppCourseTheme')==='light') document.documentEleme
 <div id="layout" style="display:none">
   <nav id="sidebar">
     <h1 id="course-title"></h1>
+    <div style="height:1.2em"></div>
     <div id="lvswitch"></div>
     <input id="search" type="search" placeholder="Пошук по курсу… (мін. 3 символи)">
     <div id="search-results"></div>
@@ -917,14 +929,10 @@ function renderLvSwitch(){
 function renderTOC(){
   const el = $('#toc'); el.innerHTML='';
 
-  // головна сторінка над списком модулів
+  // напис-заголовок над списком модулів
   const mp = document.createElement('div');
-  mp.className = 'toc-mod';
-  const mpt = document.createElement('div');
-  mpt.className = 'mtitle';
-  mpt.innerHTML = '&#127968; Home';
-  mpt.onclick = openHome;
-  mp.appendChild(mpt);
+  mp.className = 'toc-head';
+  mp.textContent = 'Зміст:';
   el.appendChild(mp);
 
   COURSE.modules.forEach(mod=>{
@@ -970,6 +978,14 @@ function renderTOC(){
     const node = document.querySelector('.toc-les[data-id="'+cur+'"]');
     if(node){ node.classList.add('active'); node.parentElement.style.display=''; }
   }
+  markCurrentModule();
+}
+/* підсвітити в дереві модуль, до якого належить поточний урок
+   (видно навіть коли всі модулі згорнуті) */
+function markCurrentModule(){
+  document.querySelectorAll('.toc-mod.cur-mod').forEach(m=>m.classList.remove('cur-mod'));
+  const act = document.querySelector('.toc-les.active');
+  if(act){ const mod = act.closest('.toc-mod'); if(mod) mod.classList.add('cur-mod'); }
 }
 
 function renderProgress(){
@@ -1030,7 +1046,8 @@ function openHome(){
   const nx = nextLesson();
   const started = !!CourseStore.getLastLesson() || done>0;
 
-  let html = '<div id="sec-head"><div class="sh-row"><span class="sh-title">Головна</span>'+
+  let html = '<div id="sec-head"><div class="sh-row">'+ homeBtnHTML()+
+    '<span class="sh-title">Головна</span>'+
     '<span class="sh-sp"></span>'+ headerToolsHTML()+
     '<button class="btn tiny" onclick="bumpFont(-1)">A&minus;</button>'+
     '<button class="btn tiny" onclick="bumpFont(1)">A+</button>'+
@@ -1040,6 +1057,7 @@ function openHome(){
   // --- герой ---
   html += '<div class="home-hero">'+
     '<h2>'+esc(COURSE.title)+'</h2>'+
+    (COURSE.subtitle? '<div class="ded">'+esc(COURSE.subtitle)+'</div>':'')+
     '<div class="hero-row">'+
       '<div class="ring" style="--p:'+pct+'"><div class="rt"><b>'+pct+'%</b><span>пройдено</span></div></div>'+
       '<div class="hero-mid">'+
@@ -1049,9 +1067,9 @@ function openHome(){
           '<span class="chip">сьогодні <b>'+CourseStore.statToday()+'</b></span>'+
         '</div>'+
         '<div class="hero-cta">'+
+          (nx? '<span class="chip next" style="align-self:center">далі: <b>'+esc(nx.num+' '+nx.title)+'</b></span>':'')+
           (nx? '<button class="btn primary big" onclick="openLesson(\''+nx.id+'\')">'+
                (started?'Продовжити':'Почати курс')+' &rarr;</button>':'')+
-          (nx? '<span class="chip next" style="align-self:center">далі: <b>'+esc(nx.num+' '+nx.title)+'</b></span>':'')+
         '</div>'+
       '</div>'+
     '</div></div>';
@@ -1135,7 +1153,9 @@ async function openLesson(id, scrollTop){
     les.md = window.COURSE_CONTENT[id];
   }
   CourseStore.setLastLesson(id);
+  pushProgress();               // синхронізувати «останній урок» між пристроями
   document.querySelectorAll('.toc-les').forEach(e=>e.classList.toggle('active', e.dataset.id===id));
+  markCurrentModule();          // підсвітити модуль поточного уроку в дереві
 
   const bank = quizBank(id);
   const qres = CourseStore.getQuiz(id);
@@ -1147,7 +1167,10 @@ async function openLesson(id, scrollTop){
   const done = CourseStore.isDone(id);
 
   let html = '<div id="sec-head"><div class="sh-row">'+
-    '<span class="sh-title" title="'+esc(les._mod.num+'. '+les._mod.title)+'">'+esc(les.num+' '+les.title)+'</span>'+
+    homeBtnHTML()+
+    '<span class="sh-title" title="'+esc(les.num+' '+les.title)+'">'+
+      '<span class="loc-mod">Модуль '+les._mod.num+'.</span> '+
+      '<span class="loc-les">Урок '+esc(les.num)+'</span></span>'+
     (les.level!=='junior'? '<span class="lvtag '+les.level+'">'+LVNAME[les.level]+'</span>':'')+
     (done? '<span class="read-badge" title="урок пройдено">&#10003; пройдено</span>':'')+
     '<span class="sh-sp"></span>'+
@@ -1390,10 +1413,11 @@ WIDGETS.complexity = function(host){
   renderLegend(); draw();
 };
 
-function toggleDone(id){ CourseStore.toggleDone(id); refreshUI(); openLesson(id, false); }
+function toggleDone(id){ CourseStore.toggleDone(id); pushProgress(); refreshUI(); openLesson(id, false); }
 /* позначити пройденим і одразу перейти до наступного (або лишитись, якщо останній) */
 function markDoneNext(id, nextId){
   if(!CourseStore.isDone(id)) CourseStore.setDone(id, true);
+  pushProgress();
   refreshUI();
   if(nextId) openLesson(nextId); else openLesson(id, false);
 }
@@ -1762,8 +1786,11 @@ function themeLabel(){
   return document.documentElement.classList.contains('light')
     ? '🌙 Темна тема' : '☀ Світла тема';
 }
+function homeBtnHTML(){
+  return '<button class="btn tiny" onclick="openHome()" title="На головну">&#127968; Home</button>';
+}
 function headerToolsHTML(){
-  return '<button class="btn tiny" onclick="openNotesPage()" title="усі замітки окремою сторінкою">🗒 Замітки</button>';
+  return '<button class="btn tiny notesbtn" onclick="openNotesPage()" title="усі замітки окремою сторінкою">🗒 Замітки</button>';
 }
 function themeBtnHTML(){
   return '<button class="btn tiny themebtn" onclick="toggleTheme()" title="перемкнути тему">'+themeLabel()+'</button>';
@@ -1855,14 +1882,32 @@ const KG_ERR = {
   key_expired:'Термін дії ключа вичерпано.', email_mismatch:'Пошта не збігається з ключем.',
   missing_fields:'Заповніть пошту й ключ.'
 };
-function enterCourse(r){
+async function enterCourse(r){
   window.LICENSE_EXPIRES = r.expiresAt || null;   // дата закінчення ключа (NULL = безстроковий)
   if(r.refreshToken) saveSession(r.email || '', r.refreshToken);   // токен для авто-входу
   CourseStore.setLevel(r.level);                  // рівень диктує ключ
   $('#keygate').style.display = 'none';
   $('#layout').style.display = 'flex';
   startHeartbeat();
+  if(ONLINE){ try{ await pullProgress(); }catch(e){} }   // підтягнути прогрес з інших пристроїв
   boot();
+}
+
+/* --- синхронізація прогресу з бекендом --- */
+async function pullProgress(){
+  const res = await CourseAPI.getProgress();
+  if(res && res.data){
+    let p = null; try{ p = JSON.parse(res.data); }catch(e){}
+    CourseStore.importProgress(p);
+  }
+}
+let progTimer = null;
+function pushProgress(){
+  if(!ONLINE) return;
+  if(progTimer) clearTimeout(progTimer);
+  progTimer = setTimeout(()=>{
+    CourseAPI.saveProgress(CourseStore.exportProgress()).catch(()=>{});
+  }, 1200);
 }
 function deviceLimitConfirm(data){
   const lim = (data && data.limit) || 2;
@@ -1877,7 +1922,7 @@ async function doActivate(force){
   btn.disabled = true; $('#kg-err').textContent = 'Перевірка…';
   try{
     const r = await CourseAPI.activate(key, email, force);
-    enterCourse(r);   // збереже refresh-токен (не ключ)
+    await enterCourse(r);   // збереже refresh-токен (не ключ)
   }catch(e){
     if(e.status===409 && e.data && e.data.error==='device_limit'){
       $('#kg-err').textContent = '';
@@ -1892,7 +1937,7 @@ async function autoLogin(saved){
   showKeyGate('Вхід…');
   try{
     const r = await CourseAPI.refresh(saved.rt);   // авто-вхід за токеном пристрою
-    enterCourse(r);
+    await enterCourse(r);
   }catch(e){
     // токен недійсний/відкликаний або ключ анульовано — чистимо й показуємо форму
     clearSession();

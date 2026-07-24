@@ -125,8 +125,32 @@ const CourseStore = (function(){
       return added;
     },
 
-    setLastLesson(id){ s.lastLesson = id; save(); },
-    getLastLesson(){ return s.lastLesson; }
+    setLastLesson(id){ s.lastLesson = id; s.readTs = Date.now(); save(); },
+    getLastLesson(){ return s.lastLesson; },
+    getReadTs(){ return s.readTs || 0; },
+
+    /* --- синхронізація прогресу між пристроями --- */
+    exportProgress(){
+      return { lastLesson: s.lastLesson || null,
+               done: s.doneLessons || [], readLog: s.readLog || {}, ts: s.readTs || 0 };
+    },
+    importProgress(p){
+      if(!p) return false;
+      let changed = false;
+      if(Array.isArray(p.done)){                       // об'єднати пройдені уроки (union)
+        const set = new Set(s.doneLessons);
+        p.done.forEach(id => { if(!set.has(id)){ s.doneLessons.push(id); changed = true; } });
+      }
+      if(p.readLog){                                    // об'єднати журнал читання (максимум за день)
+        for(const d in p.readLog){ s.readLog[d] = Math.max(s.readLog[d]||0, p.readLog[d]||0); }
+        changed = true;
+      }
+      if((p.ts||0) > (s.readTs||0) && p.lastLesson){    // останній урок беремо новіший
+        s.lastLesson = p.lastLesson; s.readTs = p.ts; changed = true;
+      }
+      if(changed) save();
+      return changed;
+    }
   };
 })();
 window.CourseStore = CourseStore;

@@ -94,6 +94,11 @@ window.CourseAPI = (function () {
       if (j && j.token) token = j.token;   // сесія продовжена свіжим токеном
       return j;
     },
+    getProgress: () => req('/progress'),
+    saveProgress: (data) => req('/progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: (typeof data === 'string' ? data : JSON.stringify(data)) })
+    }),
     release: () => req('/release', { method: 'POST' })
   };
 })();
